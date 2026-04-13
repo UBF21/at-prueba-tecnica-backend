@@ -5,8 +5,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
     <PackageReference Include="Vali-Flow.Core" Version="2.0.1" />
     <PackageReference Include="Vali-Mediator" Version="2.0.1" />
+    <PackageReference Include="Vali-Mediator.AspNetCore" Version="1.0.1" />
     <PackageReference Include="Vali-Mediator.Resilience" Version="1.0.1" />
     <PackageReference Include="Vali-Validation" Version="2.0.1" />
     <PackageReference Include="Vali-Validation.ValiMediator" Version="1.0.1" />
