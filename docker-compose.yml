@@ -55,20 +55,6 @@ services:
     networks:
       - reto-network
 
-  frontend:
-    build:
-      context: ../../../Documents/Proyectos/at-prueba-tecnica-frontend
-      dockerfile: Dockerfile
-    container_name: reto_frontend
-    environment:
-      - VITE_API_URL=http://localhost:5000
-    ports:
-      - "5173:80"
-    depends_on:
-      - backend
-    networks:
-      - reto-network
-
 networks:
   reto-network:
     driver: bridge
