@@ -1,34 +1,85 @@
+using System.Text;
+using at_prueba_tecnica_backend.Api.Middlewares;
+using at_prueba_tecnica_backend.Application;
+using at_prueba_tecnica_backend.Infrastructure;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Scalar.AspNetCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Vali-Mediator con Vali-Validation integration
+builder.Services.AddValiMediatorWithValidation(config =>
+{
+    config.RegisterServicesFromAssembly(typeof(ApplicationAssemblyMarker).Assembly);
+}, typeof(ApplicationAssemblyMarker).Assembly);
+
+// Infrastructure DI
+builder.Services.AddInfrastructure(builder.Configuration);
+
+// JWT Authentication
+var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()
+    ?? throw new InvalidOperationException("JwtSettings not configured in appsettings.json");
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret));
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = signingKey,
+            ValidateIssuer = true,
+            ValidIssuer = jwtSettings.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwtSettings.Audience,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+// Authorization
+builder.Services.AddAuthorization();
+
+// Scalar API documentation
+builder.Services.AddScalar(options =>
+{
+    options.Title = "RetoPedidos API";
+    options.DefaultHttpClient = new("http://localhost:5000", "http://localhost:5000");
+});
+
+// Controllers
+builder.Services.AddControllers();
+
+// CORS para frontend en desarrollo
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Global exception middleware
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
+// HTTP pipeline
 app.UseHttpsRedirection();
+app.UseCors("AllowFrontend");
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+app.UseAuthentication();
+app.UseAuthorization();
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-});
+// Scalar documentation
+app.MapScalarApiReference();
+app.MapOpenApi();
+
+// Controllers
+app.MapControllers();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
