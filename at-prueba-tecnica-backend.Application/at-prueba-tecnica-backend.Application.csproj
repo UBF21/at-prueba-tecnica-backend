@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\at-prueba-tecnica-backend.Domain\at-prueba-tecnica-backend.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Vali-Flow.Core" Version="2.0.1" />
+    <PackageReference Include="Vali-Mediator" Version="2.0.1" />
+    <PackageReference Include="Vali-Mediator.Resilience" Version="1.0.1" />
+    <PackageReference Include="Vali-Validation" Version="2.0.1" />
+    <PackageReference Include="Vali-Validation.ValiMediator" Version="1.0.1" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <RootNamespace>at_prueba_tecnica_backend.Application</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
