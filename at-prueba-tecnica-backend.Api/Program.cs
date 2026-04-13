@@ -47,12 +47,6 @@ builder.Services.AddAuthorization();
 // OpenAPI (requerido por Scalar)
 builder.Services.AddOpenApi();
 
-// Scalar API documentation
-builder.Services.AddScalar(options =>
-{
-    options.Title = "RetoPedidos API";
-});
-
 // Controllers
 builder.Services.AddControllers();
 
@@ -79,9 +73,14 @@ app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Scalar documentation
-app.MapScalar("/scalar");
+// OpenAPI y Scalar documentation
 app.MapOpenApi();
+
+// Scalar UI en /scalar
+if (app.Environment.IsDevelopment())
+{
+    app.MapScalarApiReference();
+}
 
 // Controllers
 app.MapControllers();
