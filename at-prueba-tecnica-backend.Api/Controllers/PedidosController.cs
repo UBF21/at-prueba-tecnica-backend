@@ -2,7 +2,9 @@ using at_prueba_tecnica_backend.Application.Pedidos.Commands;
 using at_prueba_tecnica_backend.Application.Pedidos.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Vali_Mediator.AspNetCore;
 using Vali_Mediator.Core.General;
+using Vali_Mediator.Core.General.Mediator;
 
 namespace at_prueba_tecnica_backend.Api.Controllers;
 
@@ -15,9 +17,9 @@ namespace at_prueba_tecnica_backend.Api.Controllers;
 [Route("api/[controller]")]
 public class PedidosController : ControllerBase
 {
-    private readonly IMediator _mediator;
+    private readonly IValiMediator _mediator;
 
-    public PedidosController(IMediator mediator)
+    public PedidosController(IValiMediator mediator)
     {
         _mediator = mediator;
     }
@@ -34,7 +36,7 @@ public class PedidosController : ControllerBase
     {
         var query = new GetPedidosQuery(page, pageSize, estado);
         var result = await _mediator.Send(query, ct);
-        return result.ToActionResult();
+        return result.ToActionResult
     }
 
     /// <summary>
