@@ -44,11 +44,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // Authorization
 builder.Services.AddAuthorization();
 
+// OpenAPI (requerido por Scalar)
+builder.Services.AddOpenApi();
+
 // Scalar API documentation
 builder.Services.AddScalar(options =>
 {
     options.Title = "RetoPedidos API";
-    options.DefaultHttpClient = new("http://localhost:5000", "http://localhost:5000");
 });
 
 // Controllers

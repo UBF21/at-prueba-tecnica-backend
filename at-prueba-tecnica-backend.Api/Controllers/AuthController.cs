@@ -1,6 +1,8 @@
 using at_prueba_tecnica_backend.Application.Auth.Commands;
 using Microsoft.AspNetCore.Mvc;
+using Vali_Mediator.AspNetCore;
 using Vali_Mediator.Core.General;
+using Vali_Mediator.Core.General.Mediator;
 
 namespace at_prueba_tecnica_backend.Api.Controllers;
 
@@ -11,9 +13,9 @@ namespace at_prueba_tecnica_backend.Api.Controllers;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly IMediator _mediator;
+    private readonly IValiMediator _mediator;
 
-    public AuthController(IMediator mediator)
+    public AuthController(IValiMediator mediator)
     {
         _mediator = mediator;
     }
