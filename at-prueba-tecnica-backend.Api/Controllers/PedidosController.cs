@@ -36,7 +36,7 @@ public class PedidosController : ControllerBase
     {
         var query = new GetPedidosQuery(page, pageSize, estado);
         var result = await _mediator.Send(query, ct);
-        return result.ToActionResult
+        return result.ToActionResult();
     }
 
     /// <summary>
