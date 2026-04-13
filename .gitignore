@@ -1,0 +1,48 @@
+# Build results
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.sln.iml
+*.user
+*.rsuser
+
+# Environment files
+.env
+.env.local
+
+# Database
+*.mdf
+*.ldf
+
+# Node modules (for frontend)
+node_modules/
+dist/
+build/
+
+# EF Core migrations (if needed to regenerate)
+!Migrations/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# NuGet
+.nuget/packages/
+*.nupkg
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Docker
+docker-compose.override.yml
