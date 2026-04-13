@@ -60,7 +60,7 @@ public class PedidosController : ControllerBase
         CancellationToken ct)
     {
         var result = await _mediator.Send(command, ct);
-        return result.ToActionResult(StatusCodes.Status201Created);
+        return result.ToActionResult();
     }
 
     /// <summary>
