@@ -3,7 +3,7 @@ version: '3.9'
 services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: at_sqlserver
+    container_name: reto_sqlserver
     environment:
       SA_PASSWORD: "${DB_PASSWORD}"
       ACCEPT_EULA: "Y"
@@ -33,10 +33,44 @@ services:
       retries: 10
       start_period: 30s
     networks:
-      - at_network
+      - reto-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: reto_backend
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=RetoPedidos;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=True;
+      - JwtSettings__Secret=${JWT_SECRET}
+      - JwtSettings__Issuer=RetoPedidos
+      - JwtSettings__Audience=RetoPedidosClient
+      - JwtSettings__ExpiresInMinutes=60
+    ports:
+      - "5000:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - reto-network
+
+  frontend:
+    build:
+      context: ../../../Documents/Proyectos/at-prueba-tecnica-frontend
+      dockerfile: Dockerfile
+    container_name: reto_frontend
+    environment:
+      - VITE_API_URL=http://localhost:5000
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    networks:
+      - reto-network
 
 networks:
-  at_network:
+  reto-network:
     driver: bridge
 
 volumes:
