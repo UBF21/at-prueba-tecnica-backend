@@ -2,9 +2,11 @@ using System.Text;
 using at_prueba_tecnica_backend.Api.Middlewares;
 using at_prueba_tecnica_backend.Application;
 using at_prueba_tecnica_backend.Infrastructure;
+using at_prueba_tecnica_backend.Infrastructure.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
+using Vali_Validation.ValiMediator;
 
 var builder = WebApplication.CreateBuilder(args);
 
