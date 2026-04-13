@@ -80,7 +80,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // Scalar documentation
-app.MapScalarApiReference();
+app.MapScalar("/scalar");
 app.MapOpenApi();
 
 // Controllers
