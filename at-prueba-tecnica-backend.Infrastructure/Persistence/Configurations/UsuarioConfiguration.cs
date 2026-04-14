@@ -55,7 +55,7 @@ public class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
             .IsUnique()
             .HasDatabaseName("IX_Usuarios_Code");
 
-        // Global query filter: excluye usuarios eliminados (DeletedAt != null)
-        builder.HasQueryFilter(u => !u.IsDeleted);
+        // Global query filter: excluye usuarios eliminados (DeletedAt == null)
+        builder.HasQueryFilter(u => u.DeletedAt == null);
     }
 }

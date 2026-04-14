@@ -57,7 +57,7 @@ public class PedidoConfiguration : IEntityTypeConfiguration<Pedido>
         builder.HasIndex(p => p.ClienteId)
             .HasDatabaseName("IX_Pedidos_ClienteId");
 
-        // Global query filter: excluye pedidos eliminados (DeletedAt != null)
-        builder.HasQueryFilter(p => !p.IsDeleted);
+        // Global query filter: excluye pedidos eliminados (DeletedAt == null)
+        builder.HasQueryFilter(p => p.DeletedAt == null);
     }
 }
