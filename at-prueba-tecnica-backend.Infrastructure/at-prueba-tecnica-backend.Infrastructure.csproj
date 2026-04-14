@@ -11,7 +11,8 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Vali-Flow" Version="1.1.0" />
+    <PackageReference Include="Vali-Flow" Version="1.3.3" />
+    <PackageReference Include="Vali-Flow.Core" Version="2.0.0" />
   </ItemGroup>
 
   <PropertyGroup>

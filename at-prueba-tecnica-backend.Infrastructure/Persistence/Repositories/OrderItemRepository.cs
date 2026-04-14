@@ -5,7 +5,7 @@ using Vali_Flow.Classes.Evaluators;
 namespace at_prueba_tecnica_backend.Infrastructure.Persistence.Repositories;
 
 /// <summary>
-/// Repository for Order entity operations.
+/// Repository for OrderItem entity operations.
 /// Inherits from ValiFlowEvaluator to provide read/write operations with Vali-Flow specifications.
 /// </summary>
-public class OrderRepository(AppDbContext dbContext) : ValiFlowEvaluator<Order>(dbContext), IOrderRepository;
+public class OrderItemRepository(AppDbContext dbContext) : ValiFlowEvaluator<OrderItem>(dbContext), IOrderItemRepository;

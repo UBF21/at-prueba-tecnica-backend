@@ -1,4 +1,4 @@
-using at_prueba_tecnica_backend.Application.Auth.Commands;
+using at_prueba_tecnica_backend.Application.Features.Auth.Commands;
 using Microsoft.AspNetCore.Mvc;
 using Vali_Mediator.AspNetCore;
 using Vali_Mediator.Core.General;

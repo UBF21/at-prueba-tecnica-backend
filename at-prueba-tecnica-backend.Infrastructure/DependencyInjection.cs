@@ -1,4 +1,4 @@
-using at_prueba_tecnica_backend.Application.Auth.Interfaces;
+using at_prueba_tecnica_backend.Application.Features.Auth.Interfaces;
 using at_prueba_tecnica_backend.Domain.Interfaces;
 using at_prueba_tecnica_backend.Infrastructure.Auth;
 using at_prueba_tecnica_backend.Infrastructure.Persistence;
@@ -40,6 +40,7 @@ public static class DependencyInjection
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<IOrderItemRepository, OrderItemRepository>();
 
         // JWT Configuration
         var jwtSettings = new JwtSettings();

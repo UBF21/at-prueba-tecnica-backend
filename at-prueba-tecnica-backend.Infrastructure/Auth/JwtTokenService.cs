@@ -1,7 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using at_prueba_tecnica_backend.Application.Auth.Interfaces;
+using at_prueba_tecnica_backend.Application.Features.Auth.Interfaces;
 using at_prueba_tecnica_backend.Domain.Entities;
 using Microsoft.IdentityModel.Tokens;
 
@@ -20,17 +20,17 @@ public class JwtTokenService : IJwtTokenService
         _jwtSettings = jwtSettings;
     }
 
-    public string GenerateToken(Usuario usuario)
+    public string GenerateToken(User user)
     {
         var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));
         var credentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
 
         var claims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
-            new Claim(ClaimTypes.Email, usuario.Email),
-            new Claim(ClaimTypes.Name, usuario.Nombre),
-            new Claim(ClaimTypes.Role, usuario.Rol.ToString())
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Name, user.Name),
+            new Claim(ClaimTypes.Role, user.Role.ToString())
         };
 
         var token = new JwtSecurityToken(
