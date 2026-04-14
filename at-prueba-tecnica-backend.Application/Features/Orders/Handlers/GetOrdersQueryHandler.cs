@@ -48,7 +48,7 @@ public class GetOrdersQueryHandler : IRequestHandler<GetOrdersQuery, Result<(Lis
                 .WithAsNoTracking(true);
 
             var queryable = await _repo.EvaluateQueryAsync(spec);
-            var orders = await queryable.ToListAsync(ct);
+            var orders = await queryable.Include(o => o.Customer).ToListAsync(ct);
 
             var dtos = orders.Select(o => o.ToDto()).ToList();
             return Result<(List<OrderDto>, int)>.Ok((dtos, total));

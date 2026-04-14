@@ -14,11 +14,13 @@ public static class OrderMappingExtensions
     public static OrderDto ToDto(this Order order, bool includeItems = false)
     {
         return new OrderDto(
+            Id: order.Id,
             Code: order.Code,
             OrderNumber: order.OrderNumber,
             Total: order.Total,
             Status: order.Status.ToString(),
             CustomerId: order.CustomerId,
+            CustomerName: order.Customer?.Name,
             CreatedAt: order.CreatedAt,
             UpdatedAt: order.UpdatedAt,
             DeletedAt: order.DeletedAt,

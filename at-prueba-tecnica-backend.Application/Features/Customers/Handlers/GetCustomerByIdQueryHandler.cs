@@ -36,6 +36,7 @@ public class GetCustomerByIdQueryHandler : IRequestHandler<GetCustomerByIdQuery,
                 return Result<CustomerDto>.Fail("Customer not found", ErrorType.NotFound);
 
             var dto = new CustomerDto(
+                Id: customer.Id,
                 Code: customer.Code,
                 Name: customer.Name,
                 Email: customer.Email,

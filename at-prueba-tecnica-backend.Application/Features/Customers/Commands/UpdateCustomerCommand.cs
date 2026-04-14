@@ -16,6 +16,7 @@ public class UpdateCustomerCommand : IRequest<Result<UpdateCustomerCommand.Respo
 
     public class Response
     {
+        public Guid Id { get; set; }
         public int Code { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;

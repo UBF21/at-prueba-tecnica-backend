@@ -14,6 +14,7 @@ public static class ProductMappingExtensions
     public static ProductDto ToDto(this Product product)
     {
         return new ProductDto(
+            Id: product.Id,
             Code: product.Code,
             Name: product.Name,
             Description: product.Description,

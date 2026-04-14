@@ -5,6 +5,7 @@ using at_prueba_tecnica_backend.Application.Features.DTOs;
 using at_prueba_tecnica_backend.Domain.Entities;
 using at_prueba_tecnica_backend.Domain.Interfaces;
 using BCrypt.Net;
+using Microsoft.Extensions.Logging;
 using Vali_Flow.Classes.Specification;
 using Vali_Mediator.Core.Request;
 using Vali_Mediator.Core.Result;

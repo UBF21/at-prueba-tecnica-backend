@@ -22,7 +22,7 @@ public class UpdateProductCommandValidator : AbstractValidator<UpdateProductComm
             .When(x => !string.IsNullOrEmpty(x.Description));
 
         RuleFor(x => x.UnitPrice)
-            .GreaterThan(0).WithMessage("Unit price must be greater than 0")
+            .GreaterThan(0m).WithMessage("Unit price must be greater than 0")
             .When(x => x.UnitPrice.HasValue);
 
         RuleFor(x => x.Stock)

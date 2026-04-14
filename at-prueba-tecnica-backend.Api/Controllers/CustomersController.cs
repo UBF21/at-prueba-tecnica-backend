@@ -6,6 +6,7 @@ using at_prueba_tecnica_backend.Application.Features.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vali_Mediator.Core.General.Mediator;
+using ComboBoxDto = at_prueba_tecnica_backend.Api.Responses.ComboBoxDto;
 
 namespace at_prueba_tecnica_backend.Api.Controllers;
 
@@ -92,5 +93,25 @@ public class CustomersController : ControllerBase
         var result = await _mediator.Send(command, ct);
         var response = result.ToApiResponse();
         return response.Success ? Ok(response) : BadRequest(response);
+    }
+
+    /// <summary>
+    /// Retrieves all customers as a combobox list (for dropdowns).
+    /// </summary>
+    [HttpGet("combobox/list")]
+    public async Task<ActionResult<ListResponse<ComboBoxDto>>> GetCustomersComboBox(CancellationToken ct = default)
+    {
+        var query = new GetCustomersQuery(1, 1000);
+        var result = await _mediator.Send(query, ct);
+
+        if (!result.IsSuccess)
+            return BadRequest(ListResponse<ComboBoxDto>.Fail(result.Error ?? ""));
+
+        var (customers, _) = result.Value;
+        var comboBoxItems = customers
+            .Select(c => new ComboBoxDto(c.Id.ToString(), c.Name))
+            .ToList();
+
+        return Ok(ListResponse<ComboBoxDto>.Ok(comboBoxItems));
     }
 }

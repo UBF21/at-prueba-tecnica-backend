@@ -47,6 +47,7 @@ public class GetCustomersQueryHandler : IRequestHandler<GetCustomersQuery, Resul
             var customers = await queryable.ToListAsync(ct);
 
             var dtos = customers.Select(c => new CustomerDto(
+                Id: c.Id,
                 Code: c.Code,
                 Name: c.Name,
                 Email: c.Email,

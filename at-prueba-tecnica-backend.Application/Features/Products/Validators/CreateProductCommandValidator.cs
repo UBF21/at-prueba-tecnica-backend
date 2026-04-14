@@ -18,7 +18,7 @@ public class CreateProductCommandValidator : AbstractValidator<CreateProductComm
             .MaximumLength(1000).WithMessage("Description must not exceed 1000 characters");
 
         RuleFor(x => x.UnitPrice)
-            .GreaterThan(0).WithMessage("Unit price must be greater than 0");
+            .GreaterThan(0m).WithMessage("Unit price must be greater than 0");
 
         RuleFor(x => x.Stock)
             .GreaterThanOrEqualTo(0).WithMessage("Stock cannot be negative");

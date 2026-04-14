@@ -54,8 +54,12 @@ builder.Services.AddAuthorization();
 // OpenAPI (requerido por Scalar)
 builder.Services.AddOpenApi();
 
-// Controllers
-builder.Services.AddControllers();
+// Controllers with camelCase JSON serialization
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    });
 
 // CORS para frontend
 builder.Services.AddCors(options =>

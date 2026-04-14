@@ -2,14 +2,15 @@ namespace at_prueba_tecnica_backend.Application.Features.DTOs;
 
 /// <summary>
 /// Data Transfer Object for Order.
-/// Exposes Code (int) as the public identifier.
 /// </summary>
 public record OrderDto(
+    Guid Id,
     int Code,
     string OrderNumber,
     decimal Total,
     string Status,
     Guid CustomerId,
+    string? CustomerName,
     DateTime CreatedAt,
     DateTime? UpdatedAt,
     DateTime? DeletedAt,

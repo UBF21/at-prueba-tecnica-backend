@@ -44,6 +44,7 @@ public class UpdateCustomerCommandHandler : IRequestHandler<UpdateCustomerComman
 
             var response = new UpdateCustomerCommand.Response
             {
+                Id = customer.Id,
                 Code = customer.Code,
                 Name = customer.Name,
                 Email = customer.Email,

@@ -1,5 +1,6 @@
 using at_prueba_tecnica_backend.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace at_prueba_tecnica_backend.Infrastructure.Persistence.Configurations;
@@ -20,10 +21,11 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .ValueGeneratedOnAdd()
             .HasDefaultValueSql("NEWID()");
 
-        // Code (int, autoincrement)
+        // Code (int, autoincrement) - readonly after save
         builder.Property(p => p.Code)
             .IsRequired()
-            .ValueGeneratedOnAdd();
+            .ValueGeneratedOnAdd()
+            .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
 
         // Audit properties
 

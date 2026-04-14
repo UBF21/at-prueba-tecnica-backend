@@ -5,6 +5,7 @@ namespace at_prueba_tecnica_backend.Application.Features.DTOs;
 /// Represents a line item in an order.
 /// </summary>
 public record OrderItemDto(
+    Guid Id,
     int Code,
     Guid OrderId,
     Guid ProductId,

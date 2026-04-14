@@ -14,6 +14,7 @@ public static class OrderItemMappingExtensions
     public static OrderItemDto ToDto(this OrderItem item)
     {
         return new OrderItemDto(
+            Id: item.Id,
             Code: item.Code,
             OrderId: item.OrderId,
             ProductId: item.ProductId,
