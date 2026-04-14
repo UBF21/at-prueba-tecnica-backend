@@ -28,7 +28,13 @@ public static class DependencyInjection
 
         services.AddDbContext<AppDbContext>(options =>
             options.UseSqlServer(connectionString, sql =>
-                sql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
+            {
+                sql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName);
+                sql.EnableRetryOnFailure(
+                    maxRetryCount: 10,
+                    maxRetryDelay: TimeSpan.FromSeconds(30),
+                    errorNumbersToAdd: null);
+            }));
 
         // Repositories
         services.AddScoped<IPedidoRepository, PedidoRepository>();

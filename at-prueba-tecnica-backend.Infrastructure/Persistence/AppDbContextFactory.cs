@@ -13,8 +13,18 @@ public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
 {
     public AppDbContext CreateDbContext(string[] args)
     {
+        var basePath = Directory.GetCurrentDirectory();
+
+        // Si estamos en Infrastructure, subir a la raíz
+        if (basePath.EndsWith("at-prueba-tecnica-backend.Infrastructure"))
+        {
+            basePath = Path.GetDirectoryName(basePath) ?? basePath;
+        }
+
+        var apiPath = Path.Combine(basePath, "at-prueba-tecnica-backend.Api");
+
         var config = new ConfigurationBuilder()
-            .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "at-prueba-tecnica-backend.Api"))
+            .SetBasePath(apiPath)
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
             .AddEnvironmentVariables()

@@ -5,7 +5,7 @@ services:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: reto_sqlserver
     environment:
-      SA_PASSWORD: "${DB_PASSWORD}"
+      SA_PASSWORD: "SqlServer123!"
       ACCEPT_EULA: "Y"
       MSSQL_PID: "Express"
     ports:
@@ -22,7 +22,7 @@ services:
           "-U",
           "sa",
           "-P",
-          "${DB_PASSWORD}",
+          "SqlServer123!",
           "-Q",
           "SELECT 1",
           "-No",
@@ -42,13 +42,13 @@ services:
     container_name: reto_backend
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=RetoPedidos;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=True;
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=RetoPedidos;User Id=sa;Password=SqlServer123!;TrustServerCertificate=True;
       - JwtSettings__Secret=${JWT_SECRET}
       - JwtSettings__Issuer=RetoPedidos
       - JwtSettings__Audience=RetoPedidosClient
       - JwtSettings__ExpiresInMinutes=60
     ports:
-      - "5000:8080"
+      - "5001:8080"
     depends_on:
       sqlserver:
         condition: service_healthy
