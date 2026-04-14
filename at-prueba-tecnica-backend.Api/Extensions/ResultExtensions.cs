@@ -14,7 +14,7 @@ public static class ResultExtensions
     public static ApiResponse<T> ToApiResponse<T>(this Result<T> result)
     {
         if (result.IsSuccess)
-            return ApiResponse<T>.Ok(result.Data!);
+            return ApiResponse<T>.Ok(result.Value!);
 
         var errors = result.Errors?.Select(e => e.Message).ToList();
         return ApiResponse<T>.Fail(result.Message ?? "An error occurred", errors);
@@ -26,7 +26,7 @@ public static class ResultExtensions
     public static ListResponse<T> ToListResponse<T>(this Result<List<T>> result)
     {
         if (result.IsSuccess)
-            return ListResponse<T>.Ok(result.Data!.AsReadOnly());
+            return ListResponse<T>.Ok(result.Value!.AsReadOnly());
 
         var errors = result.Errors?.Select(e => e.Message).ToList();
         return ListResponse<T>.Fail(result.Message ?? "An error occurred", errors);
@@ -43,7 +43,7 @@ public static class ResultExtensions
     {
         if (result.IsSuccess)
         {
-            var (data, total) = result.Data;
+            var (data, total) = result.Value;
             return PaginatedResponse<T>.Ok(data.AsReadOnly(), page, pageSize, total);
         }
 

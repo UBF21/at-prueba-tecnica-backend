@@ -34,7 +34,7 @@ public class GetProductsQueryHandler : IRequestHandler<GetProductsQuery, Result<
         try
         {
             // Get total count without pagination
-            var countSpec = new BasicSpecification<Product>()
+            var countSpec = new QuerySpecification<Product>()
                 .WithFilter(ProductFilters.Active());
 
             var countQueryable = await _repo.EvaluateQueryAsync(countSpec);
