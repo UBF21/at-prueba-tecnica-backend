@@ -8,6 +8,30 @@ Sistema de gestión de pedidos con autenticación JWT, validaciones, resiliencia
 
 ---
 
+## ⚡ Inicio Rápido en 5 Pasos
+
+```bash
+# 1. Navegar al directorio
+cd ~/RiderProjects/at-prueba-tecnica-backend
+
+# 2. Levantar backend y BD con Docker
+docker-compose up -d --build
+
+# 3. Esperar 15 segundos a que se inicialice
+sleep 15
+
+# 4. Hacer login desde terminal
+curl -X POST http://localhost:5001/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@retopedidos.com","password":"Admin123!"}'
+
+# 5. O abrir Swagger: http://localhost:5001/swagger
+```
+
+✅ **¡Listo!** El backend está corriendo en `http://localhost:5001`
+
+---
+
 ## 🏗️ Estructura
 
 ```
@@ -30,41 +54,44 @@ at-prueba-tecnica-backend/
 
 ## 🚀 Inicio Rápido
 
-### 1. Instalar dependencias .NET
+### Opción 1: Docker Compose (Recomendado para desarrollo)
 
 ```bash
 cd ~/RiderProjects/at-prueba-tecnica-backend
 
-# Restaurar NuGet packages
-dotnet restore
-```
-
-### 2. Levantar SQL Server con Docker
-
-```bash
-# Crear archivo .env basado en .env.example
+# Crear archivo .env basado en .env.example (si no existe)
 cp .env.example .env
 
-# Levantar SQL Server
-docker compose up -d sqlserver
+# Levantar todos los servicios (SQL Server + Backend)
+docker-compose down && docker-compose up -d --build
+
+# Ver logs del backend
+docker-compose logs -f backend
+
+# Esperar ~15 segundos a que se inicialice la BD
 ```
 
-### 3. Aplicar migraciones EF Core
+**Servicios disponibles:**
+- 🔵 **Backend API**: http://localhost:5001
+- 📊 **Swagger UI**: http://localhost:5001/swagger
+- 🗄️ **SQL Server**: localhost:1433 (usuario: `sa`, password: `SqlServer123!`)
+
+### Opción 2: Ejecución Local (requiere SQL Server corriendo)
 
 ```bash
-dotnet ef database update \
-  --project at-prueba-tecnica-backend.Infrastructure \
-  --startup-project at-prueba-tecnica-backend.Api
-```
+cd ~/RiderProjects/at-prueba-tecnica-backend
 
-### 4. Ejecutar API
+# 1. Restaurar dependencias
+dotnet restore
 
-```bash
+# 2. Asegurar que SQL Server está corriendo
+# (opcionalmente, levanta solo SQL Server: docker-compose up -d sqlserver)
+
+# 3. Ejecutar API
 dotnet run --project at-prueba-tecnica-backend.Api
 ```
 
-API disponible en: `https://localhost:5000`  
-Swagger UI: `https://localhost:5000/swagger`
+API disponible en: `http://localhost:5000`
 
 ---
 
@@ -121,54 +148,121 @@ dotnet ef migrations script \
 
 ## 🧪 Testing
 
-### Swagger (recomendado para desarrollo)
-
-1. Ir a `https://localhost:5000/swagger`
-2. `POST /auth/login` con credenciales por defecto → obtener JWT
-3. Click en botón **Authorize** → pegar Bearer token
-4. Probar endpoints con autenticación
-
-### Validaciones clave
+### 1️⃣ Login desde Terminal
 
 ```bash
-# Total debe ser > 0
-POST /api/pedidos { "total": 0 }  # 400 Bad Request
+# Obtener JWT token
+curl -X POST http://localhost:5001/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@retopedidos.com","password":"Admin123!"}' | jq .
 
-# NumeroPedido único
-POST /api/pedidos { "numeroPedido": "DUP-001" }  # 409 Conflict (si existe)
+# Respuesta esperada:
+# {
+#   "success": true,
+#   "data": {
+#     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+#     "expiresIn": 3600,
+#     ...
+#   }
+# }
+```
+
+### 2️⃣ Usar JWT en siguientes requests
+
+```bash
+# Guardar el token
+TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+# Listar órdenes (requiere JWT)
+curl -X GET http://localhost:5001/api/orders?page=1&pageSize=10 \
+  -H "Authorization: Bearer $TOKEN" | jq .
+
+# Crear orden
+curl -X POST http://localhost:5001/api/orders \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"orderNumber":"ORD-001","customerId":1}' | jq .
+```
+
+### 3️⃣ Scalar Docs (recomendado para desarrollo)
+
+1. Abrir `http://localhost:5001/scalar/v1`
+2. Click en `POST /api/auth/login`
+3. Escribir credenciales:
+   ```json
+   {
+     "email": "admin@retopedidos.com",
+     "password": "Admin123!"
+   }
+   ```
+4. Click **Send** → copiar el `token` de la respuesta
+5. Usar el token en próximos requests (header `Authorization: Bearer <token>`)
+
+### 4️⃣ Validaciones clave
+
+```bash
+# OrderNumber único
+POST /api/orders { "orderNumber": "DUP-001" }  # 409 Conflict (si existe)
 
 # Soft delete
-DELETE /api/pedidos/1  # 200 OK, marca como eliminado
-GET /api/pedidos       # No retorna registros eliminados
+DELETE /api/orders/1  # 200 OK, marca como eliminado
+GET /api/orders       # No retorna registros eliminados
 ```
 
 ---
 
-## 🐳 Docker (Producción)
+## 🐳 Docker Compose
+
+### Levantar todos los servicios
 
 ```bash
-# Construir y levantar todo
-docker compose up --build
+cd ~/RiderProjects/at-prueba-tecnica-backend
 
-# Servicios:
-# - sqlserver:   localhost:1433
-# - backend:     localhost:5000
-# - frontend:    localhost:5173
+# Reconstruir imágenes y levantar
+docker-compose up -d --build
+
+# Ver estado de los contenedores
+docker-compose ps
+
+# Ver logs
+docker-compose logs -f backend      # Logs del backend
+docker-compose logs -f sqlserver    # Logs de SQL Server
+
+# Detener servicios
+docker-compose down
+
+# Detener y eliminar volúmenes (limpia la BD)
+docker-compose down -v
 ```
+
+**Configuración:**
+- **sqlserver** → localhost:1433 (sa / SqlServer123!)
+- **backend** → localhost:5001 (http)
+- **CORS** → Permite localhost:5173 y localhost:5174 (frontend)
+- **Migrations** → Automáticas al iniciar (EnsureCreatedAsync)
 
 ---
 
 ## 📝 Endpoints Principales
 
-### Autenticación
-- `POST /auth/login` — Obtener JWT
+### Autenticación (sin JWT)
+- `POST /api/auth/login` — Obtener JWT token
 
-### Pedidos (requiere JWT)
-- `GET /api/pedidos?page=1&pageSize=10` — Listar pedidos
-- `GET /api/pedidos/{id}` — Obtener pedido por ID
-- `POST /api/pedidos` — Crear pedido
-- `PUT /api/pedidos/{id}` — Actualizar pedido
-- `DELETE /api/pedidos/{id}` — Eliminar pedido (soft delete)
+### Órdenes (requiere JWT)
+- `GET /api/orders?page=1&pageSize=10&status=Pending` — Listar órdenes
+- `GET /api/orders/{id}` — Obtener orden por ID
+- `POST /api/orders` — Crear orden
+- `PUT /api/orders/{id}` — Actualizar orden
+- `DELETE /api/orders/{id}` — Eliminar orden (soft delete)
+- `POST /api/orders/{id}/items` — Agregar item a orden
+- `PUT /api/orders/{id}/status` — Cambiar estado de orden
+
+### Productos (requiere JWT)
+- `GET /api/products?page=1&pageSize=10` — Listar productos
+- `GET /api/products/{id}` — Obtener producto por ID
+- `POST /api/products` — Crear producto
+- `PUT /api/products/{id}` — Actualizar producto
+- `DELETE /api/products/{id}` — Eliminar producto (soft delete)
 
 ---
 
@@ -260,24 +354,39 @@ Result<T> → HTTP Status Code
 
 ## 🐛 Troubleshooting
 
+### Backend no arranca en Docker
+```bash
+# Limpieza completa
+docker system prune -af --volumes
+
+# Rebuildar desde cero
+docker-compose down -v && docker-compose up -d --build
+```
+
+### "Invalid object name 'Users'" en login
+→ Las tablas se crean automáticamente al iniciar (EnsureCreatedAsync)  
+→ Esperar ~15 segundos a que la BD se inicialice  
+→ Revisar logs: `docker-compose logs backend`
+
+### CORS error en frontend
+→ Backend permite: `http://localhost:5173` y `http://localhost:5174`  
+→ Verificar en `Program.cs` línea 60: `policy.WithOrigins(...)`
+
 ### "dotnet command not found"
 → Instalar .NET 9 SDK desde https://dotnet.microsoft.com/download
 
-### SQL Server no conecta
+### SQL Server no conecta (local)
 → Verificar que Docker está corriendo: `docker ps`  
-→ Chequear `.env` tiene la contraseña correcta
-
-### Migrations fallan
-→ Eliminar `/Migrations` y crear de nuevo  
-→ Asegurar que `appsettings.json` tiene la conexión correcta
+→ Chequear que el puerto 1433 está disponible
 
 ---
 
-## 📖 Recursos
+## 📖 Documentación
 
-- [Plan de implementación](./docs/PLAN.md)
-- [Migraciones SQL](./scripts/migration.sql)
-- [Swagger/OpenAPI](https://localhost:5000/swagger)
+- 📚 **Scalar API Docs**: http://localhost:5001/scalar/v1
+- 🔍 **OpenAPI Spec**: http://localhost:5001/openapi/v1.json
+- 📋 [Migraciones SQL](./scripts/migration.sql)
+- 🏗️ [Estructura del Proyecto](./PROJECT_STRUCTURE.md)
 
 ---
 
