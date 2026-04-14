@@ -35,7 +35,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<LoginRes
         {
             // Buscar usuario por email usando BasicSpecification
             var spec = new BasicSpecification<User>()
-                .WithFilter(new ValiFlowQuery<User>().Add(u => u.Email == command.Email))
+                .WithFilter(new ValiFlowQuery<User>().EqualTo(u => u.Email, command.Email))
                 .WithAsNoTracking(true);
 
             var user = await _userRepo.EvaluateGetFirstAsync(spec, ct);
