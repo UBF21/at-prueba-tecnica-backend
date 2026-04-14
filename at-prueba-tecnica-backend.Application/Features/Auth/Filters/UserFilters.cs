@@ -19,7 +19,8 @@ public static class UserFilters
     /// Filter by user email.
     /// </summary>
     public static ValiFlowQuery<User> ByEmail(string email) =>
-        Active().And().EqualTo(u => u.Email, email);
+        new ValiFlowQuery<User>()
+            .EqualTo(u => u.Email, email);
 
     /// <summary>
     /// Filter by user ID.

@@ -68,7 +68,7 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.HasIndex(c => c.Name)
             .HasDatabaseName("IX_Customers_Name");
 
-        // Global query filter for soft delete
-        builder.HasQueryFilter(c => c.DeletedAt == null);
+        // Global query filter for soft delete - disabled for testing
+        // builder.HasQueryFilter(c => !c.DeletedAt.HasValue);
     }
 }

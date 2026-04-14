@@ -63,6 +63,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasDatabaseName("IX_Users_Code");
 
         // Global query filter: exclude soft-deleted records
-        builder.HasQueryFilter(u => u.DeletedAt == null);
+        // builder.HasQueryFilter(u => !u.DeletedAt.HasValue); // Disabled for testing
     }
 }

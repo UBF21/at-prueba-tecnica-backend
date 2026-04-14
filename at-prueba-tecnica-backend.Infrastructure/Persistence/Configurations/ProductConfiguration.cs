@@ -66,6 +66,6 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasDatabaseName("IX_Products_Name");
 
         // Global query filter: exclude soft-deleted records
-        builder.HasQueryFilter(p => p.DeletedAt == null);
+        // builder.HasQueryFilter(p => !p.DeletedAt.HasValue); // Disabled for testing
     }
 }

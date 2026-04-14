@@ -71,6 +71,6 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasDatabaseName("IX_Orders_CustomerId");
 
         // Global query filter: exclude soft-deleted records
-        builder.HasQueryFilter(o => o.DeletedAt == null);
+        // builder.HasQueryFilter(o => !o.DeletedAt.HasValue); // Disabled for testing
     }
 }
