@@ -101,9 +101,9 @@ using (var scope = app.Services.CreateScope())
         {
             Console.WriteLine($"[Intento {attempt + 1}/{maxRetries}] Intentando conectar a SQL Server...");
 
-            // Intentar crear/migrar BD
-            await db.Database.EnsureCreatedAsync();
-            Console.WriteLine("✅ BD inicializada correctamente");
+            // Aplicar migraciones e inicializar BD
+            await db.Database.MigrateAsync();
+            Console.WriteLine("✅ BD inicializada correctamente con migraciones");
             break;
         }
         catch (Exception ex)
