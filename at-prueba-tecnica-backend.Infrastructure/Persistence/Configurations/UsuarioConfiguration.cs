@@ -15,7 +15,20 @@ public class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
         builder.ToTable("Usuarios");
         builder.HasKey(u => u.Id);
 
-        // Propiedades
+        // Propiedades de auditoría
+        builder.Property(u => u.Code)
+            .IsRequired()
+            .HasMaxLength(36);
+
+        builder.Property(u => u.CreatedAt)
+            .IsRequired()
+            .HasDefaultValueSql("GETUTCDATE()");
+
+        builder.Property(u => u.UpdatedAt);
+
+        builder.Property(u => u.DeletedAt);
+
+        // Propiedades de negocio
         builder.Property(u => u.Email)
             .IsRequired()
             .HasMaxLength(255);
@@ -27,6 +40,11 @@ public class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
         builder.Property(u => u.Nombre)
             .IsRequired()
             .HasMaxLength(100);
+
+        builder.Property(u => u.Rol)
+            .IsRequired()
+            .HasConversion<string>()
+            .HasMaxLength(20);
 
         builder.Property(u => u.FechaCreacion)
             .IsRequired()
@@ -43,7 +61,11 @@ public class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
             .IsUnique()
             .HasDatabaseName("IX_Usuarios_Email");
 
-        // Global query filter: excluye usuarios eliminados automáticamente
-        builder.HasQueryFilter(u => !u.Eliminado);
+        builder.HasIndex(u => u.Code)
+            .IsUnique()
+            .HasDatabaseName("IX_Usuarios_Code");
+
+        // Global query filter: excluye usuarios eliminados (DeletedAt != null)
+        builder.HasQueryFilter(u => !u.IsDeleted);
     }
 }

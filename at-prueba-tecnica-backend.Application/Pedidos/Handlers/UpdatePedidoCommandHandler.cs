@@ -32,7 +32,7 @@ public class UpdatePedidoCommandHandler : IRequestHandler<UpdatePedidoCommand, R
 
             pedido.Total = command.Total;
             pedido.Estado = command.Estado;
-            pedido.FechaModificacion = DateTime.UtcNow;
+            pedido.UpdatedAt = DateTime.UtcNow;
 
             await _repo.UpdateAsync(pedido, ct);
             return Result<PedidoDto>.Ok(pedido.ToDto());

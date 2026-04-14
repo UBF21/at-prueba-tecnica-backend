@@ -31,7 +31,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<LoginRes
         {
             // Buscar usuario por email (obtenemos todos y filtramos en memoria por ahora)
             var usuarios = await _usuarioRepo.GetAllAsync(ct);
-            var usuario = usuarios.FirstOrDefault(u => u.Email == command.Email && !u.Eliminado);
+            var usuario = usuarios.FirstOrDefault(u => u.Email == command.Email);
 
             if (usuario is null)
                 return Result<LoginResponseDto>.Fail("Credenciales inválidas", ErrorType.Unauthorized);

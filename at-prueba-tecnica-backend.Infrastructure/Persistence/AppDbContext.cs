@@ -1,4 +1,5 @@
 using at_prueba_tecnica_backend.Domain.Entities;
+using at_prueba_tecnica_backend.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace at_prueba_tecnica_backend.Infrastructure.Persistence;
@@ -25,9 +26,12 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Usuario>().HasData(new Usuario
         {
             Id = 1,
+            Code = "550e8400-e29b-41d4-a716-446655440000", // GUID fijo para desarrollo
             Nombre = "Administrador",
             Email = "admin@retopedidos.com",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!")
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!"),
+            Rol = Rol.Admin,
+            CreatedAt = DateTime.UtcNow
         });
     }
 }

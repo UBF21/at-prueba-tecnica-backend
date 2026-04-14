@@ -41,7 +41,7 @@ public class CreatePedidoCommandHandler : IRequestHandler<CreatePedidoCommand, R
                 Total = command.Total,
                 ClienteId = command.ClienteId,
                 Estado = EstadoPedido.Pendiente,
-                FechaCreacion = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow
             };
 
             await _repo.AddAsync(pedido, ct);

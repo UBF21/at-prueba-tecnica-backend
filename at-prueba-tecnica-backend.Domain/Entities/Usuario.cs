@@ -1,13 +1,13 @@
+using at_prueba_tecnica_backend.Domain.Enums;
+
 namespace at_prueba_tecnica_backend.Domain.Entities;
 
 /// <summary>
 /// Entidad de Usuario. Representa un usuario autenticado en el sistema.
+/// Hereda de AuditableEntity para obtener: Id, Code, CreatedAt, UpdatedAt, DeletedAt.
 /// </summary>
-public class Usuario
+public class Usuario : AuditableEntity
 {
-    /// <summary>Identificador único del usuario.</summary>
-    public int Id { get; set; }
-
     /// <summary>Email único del usuario (requerido).</summary>
     public string Email { get; set; } = string.Empty;
 
@@ -17,12 +17,6 @@ public class Usuario
     /// <summary>Nombre completo del usuario (requerido).</summary>
     public string Nombre { get; set; } = string.Empty;
 
-    /// <summary>Fecha de creación del usuario.</summary>
-    public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
-
-    /// <summary>Fecha de última modificación del usuario.</summary>
-    public DateTime? FechaModificacion { get; set; }
-
-    /// <summary>Soft delete: indica si el usuario fue eliminado lógicamente.</summary>
-    public bool Eliminado { get; set; }
+    /// <summary>Rol del usuario (Admin, Usuario, Visualizador).</summary>
+    public Rol Rol { get; set; } = Rol.Usuario;
 }

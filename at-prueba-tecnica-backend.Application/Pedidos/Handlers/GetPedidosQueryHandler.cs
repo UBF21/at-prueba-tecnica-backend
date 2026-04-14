@@ -32,7 +32,7 @@ public class GetPedidosQueryHandler : IRequestHandler<GetPedidosQuery, Result<Li
                 pedidos = pedidos.Where(p => p.Estado.ToString() == query.Estado).ToList();
 
             // Ordenar por fecha de creación descendente
-            var ordenados = pedidos.OrderByDescending(p => p.FechaCreacion).ToList();
+            var ordenados = pedidos.OrderByDescending(p => p.CreatedAt).ToList();
 
             // Aplicar paginación
             var paginados = ordenados

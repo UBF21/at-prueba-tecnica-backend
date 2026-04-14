@@ -15,7 +15,20 @@ public class PedidoConfiguration : IEntityTypeConfiguration<Pedido>
         builder.ToTable("Pedidos");
         builder.HasKey(p => p.Id);
 
-        // Propiedades
+        // Propiedades de auditoría
+        builder.Property(p => p.Code)
+            .IsRequired()
+            .HasMaxLength(36);
+
+        builder.Property(p => p.CreatedAt)
+            .IsRequired()
+            .HasDefaultValueSql("GETUTCDATE()");
+
+        builder.Property(p => p.UpdatedAt);
+
+        builder.Property(p => p.DeletedAt);
+
+        // Propiedades de negocio
         builder.Property(p => p.NumeroPedido)
             .IsRequired()
             .HasMaxLength(50);
@@ -32,25 +45,19 @@ public class PedidoConfiguration : IEntityTypeConfiguration<Pedido>
         builder.Property(p => p.ClienteId)
             .IsRequired();
 
-        builder.Property(p => p.FechaCreacion)
-            .IsRequired()
-            .HasDefaultValueSql("GETUTCDATE()");
-
-        builder.Property(p => p.FechaModificacion);
-
-        builder.Property(p => p.Eliminado)
-            .IsRequired()
-            .HasDefaultValue(false);
-
         // Índices
         builder.HasIndex(p => p.NumeroPedido)
             .IsUnique()
             .HasDatabaseName("IX_Pedidos_NumeroPedido");
 
+        builder.HasIndex(p => p.Code)
+            .IsUnique()
+            .HasDatabaseName("IX_Pedidos_Code");
+
         builder.HasIndex(p => p.ClienteId)
             .HasDatabaseName("IX_Pedidos_ClienteId");
 
-        // Global query filter: excluye pedidos eliminados automáticamente
-        builder.HasQueryFilter(p => !p.Eliminado);
+        // Global query filter: excluye pedidos eliminados (DeletedAt != null)
+        builder.HasQueryFilter(p => !p.IsDeleted);
     }
 }

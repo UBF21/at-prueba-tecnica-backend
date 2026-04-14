@@ -19,8 +19,8 @@ public static class PedidoMappingExtensions
             Total: pedido.Total,
             Estado: pedido.Estado.ToString(),
             ClienteId: pedido.ClienteId,
-            FechaCreacion: pedido.FechaCreacion,
-            FechaModificacion: pedido.FechaModificacion
+            FechaCreacion: pedido.CreatedAt,
+            FechaModificacion: pedido.UpdatedAt
         );
     }
 }
