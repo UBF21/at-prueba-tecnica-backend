@@ -1,5 +1,5 @@
 using at_prueba_tecnica_backend.Application.Features.Products.Commands;
-using FluentValidation;
+using Vali_Validation.Core.Validators;
 
 namespace at_prueba_tecnica_backend.Application.Features.Products.Validators;
 
@@ -11,6 +11,6 @@ public class DeleteProductCommandValidator : AbstractValidator<DeleteProductComm
     public DeleteProductCommandValidator()
     {
         RuleFor(x => x.Id)
-            .GreaterThan(0).WithMessage("Product ID must be greater than 0");
+            .NotEmpty().WithMessage("Product ID must be valid");
     }
 }

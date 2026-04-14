@@ -18,12 +18,12 @@ public static class ProductFilters
     /// <summary>
     /// Filter by product ID.
     /// </summary>
-    public static ValiFlowQuery<Product> ById(int id) =>
+    public static ValiFlowQuery<Product> ById(Guid id) =>
         Active().And().EqualTo(p => p.Id, id);
 
     /// <summary>
     /// Filter by product code.
     /// </summary>
-    public static ValiFlowQuery<Product> ByCode(string code) =>
+    public static ValiFlowQuery<Product> ByCode(int code) =>
         Active().And().EqualTo(p => p.Code, code);
 }

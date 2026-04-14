@@ -30,7 +30,7 @@ public static class OrderFilters
     /// <summary>
     /// Filter by order ID.
     /// </summary>
-    public static ValiFlowQuery<Order> ById(int id) =>
+    public static ValiFlowQuery<Order> ById(Guid id) =>
         Active().And().EqualTo(o => o.Id, id);
 
     /// <summary>
@@ -42,6 +42,6 @@ public static class OrderFilters
     /// <summary>
     /// Filter by customer ID.
     /// </summary>
-    public static ValiFlowQuery<Order> ByCustomerId(int customerId) =>
+    public static ValiFlowQuery<Order> ByCustomerId(Guid customerId) =>
         Active().And().EqualTo(o => o.CustomerId, customerId);
 }

@@ -1,5 +1,5 @@
 using at_prueba_tecnica_backend.Application.Features.Orders.Commands;
-using FluentValidation;
+using Vali_Validation.Core.Validators;
 
 namespace at_prueba_tecnica_backend.Application.Features.Orders.Validators;
 
@@ -15,6 +15,6 @@ public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
             .MaximumLength(100).WithMessage("Order number must not exceed 100 characters");
 
         RuleFor(x => x.CustomerId)
-            .GreaterThan(0).WithMessage("Customer ID must be greater than 0");
+            .NotEmpty().WithMessage("Customer ID must be valid");
     }
 }

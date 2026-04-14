@@ -2,16 +2,16 @@ namespace at_prueba_tecnica_backend.Domain.Entities;
 
 /// <summary>
 /// Clase base para todas las entidades que requieren auditoría.
-/// Proporciona: Id (PK), Code (GUID único para compartir entre ambientes),
+/// Proporciona: Id (UUID/GUID PK), Code (int secuencial para referencias públicas),
 /// timestamps (CreatedAt, UpdatedAt, DeletedAt para soft delete).
 /// </summary>
 public abstract class AuditableEntity
 {
-    /// <summary>Identificador único interno (PK autoincremental).</summary>
-    public int Id { get; set; }
+    /// <summary>Identificador único global (PK UUID/GUID) - Seguro, no expone secuencia.</summary>
+    public Guid Id { get; set; } = Guid.NewGuid();
 
-    /// <summary>Código único (GUID) compartible entre ambientes - NO se expone el Id.</summary>
-    public string Code { get; set; } = Guid.NewGuid().ToString();
+    /// <summary>Código secuencial entero (autoincremental) para referencias públicas y legibilidad.</summary>
+    public int Code { get; set; }
 
     /// <summary>Fecha de creación en UTC.</summary>
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

@@ -21,8 +21,11 @@ public class Order : AuditableEntity
     /// <summary>Current status of the order (required).</summary>
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
 
-    /// <summary>Customer ID who placed the order (required).</summary>
-    public int CustomerId { get; set; }
+    /// <summary>Customer ID (UUID) who placed the order (required).</summary>
+    public Guid CustomerId { get; set; }
+
+    /// <summary>Navigation property to the customer who placed the order.</summary>
+    public Customer? Customer { get; set; }
 
     /// <summary>Collection of order line items.</summary>
     public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();

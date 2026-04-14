@@ -48,7 +48,7 @@ public class OrdersController : ControllerBase
     /// Retrieves a specific order by ID.
     /// </summary>
     [HttpGet("{id}")]
-    public async Task<ActionResult<ApiResponse<OrderDto>>> GetOrderById(int id, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<OrderDto>>> GetOrderById(Guid id, CancellationToken ct)
     {
         var query = new GetOrderByIdQuery(id);
         var result = await _mediator.Send(query, ct);
@@ -75,7 +75,7 @@ public class OrdersController : ControllerBase
     /// </summary>
     [HttpPut("{id}")]
     public async Task<ActionResult<ApiResponse<OrderDto>>> UpdateOrder(
-        int id,
+        Guid id,
         [FromBody] UpdateOrderCommand command,
         CancellationToken ct)
     {
@@ -90,7 +90,7 @@ public class OrdersController : ControllerBase
     /// The order is marked as deleted but not removed from the database.
     /// </summary>
     [HttpDelete("{id}")]
-    public async Task<ActionResult<ApiResponse<bool>>> DeleteOrder(int id, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<bool>>> DeleteOrder(Guid id, CancellationToken ct)
     {
         var command = new DeleteOrderCommand(id);
         var result = await _mediator.Send(command, ct);
@@ -105,7 +105,7 @@ public class OrdersController : ControllerBase
     /// </summary>
     [HttpPost("{orderId}/items")]
     public async Task<IActionResult> AddOrderItem(
-        int orderId,
+        Guid orderId,
         [FromBody] AddOrderItemRequest request,
         CancellationToken ct)
     {

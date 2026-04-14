@@ -5,21 +5,26 @@ using at_prueba_tecnica_backend.Infrastructure;
 using at_prueba_tecnica_backend.Infrastructure.Auth;
 using at_prueba_tecnica_backend.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
+using Vali_Mediator.Core.General.Extension;
+using Vali_Validation.Core.Extensions;
 using Vali_Validation.ValiMediator;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Infrastructure DI (must be before validators since validators depend on repositories)
+builder.Services.AddInfrastructure(builder.Configuration);
+
+// Register Vali-Validation validators from assembly
+builder.Services.AddValidationsFromAssembly(typeof(ApplicationAssemblyMarker).Assembly);
+
 // Vali-Mediator con Vali-Validation integration
-builder.Services.AddValiMediatorWithValidation(config =>
+builder.Services.AddValiMediator(config =>
 {
     config.RegisterServicesFromAssembly(typeof(ApplicationAssemblyMarker).Assembly);
-}, typeof(ApplicationAssemblyMarker).Assembly);
-
-// Infrastructure DI
-builder.Services.AddInfrastructure(builder.Configuration);
+    config.AddValiValidationBehavior();
+});
 
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()
@@ -52,12 +57,15 @@ builder.Services.AddOpenApi();
 // Controllers
 builder.Services.AddControllers();
 
-// CORS para frontend en desarrollo
+// CORS para frontend
 builder.Services.AddCors(options =>
 {
+    var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+        ?? new[] { "http://localhost:5173", "http://localhost:5174" };
+
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "http://localhost:5174")
+        policy.WithOrigins(allowedOrigins)
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials();

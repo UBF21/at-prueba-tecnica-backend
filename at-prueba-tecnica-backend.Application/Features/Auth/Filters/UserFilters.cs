@@ -24,6 +24,6 @@ public static class UserFilters
     /// <summary>
     /// Filter by user ID.
     /// </summary>
-    public static ValiFlowQuery<User> ById(int id) =>
+    public static ValiFlowQuery<User> ById(Guid id) =>
         Active().And().EqualTo(u => u.Id, id);
 }

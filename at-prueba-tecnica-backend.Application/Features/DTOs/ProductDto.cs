@@ -2,10 +2,10 @@ namespace at_prueba_tecnica_backend.Application.Features.DTOs;
 
 /// <summary>
 /// Data Transfer Object for Product.
-/// Exposes Code as the shareable identifier across environments.
+/// Exposes Code (int) as the public identifier.
 /// </summary>
 public record ProductDto(
-    string Code,
+    int Code,
     string Name,
     string? Description,
     decimal UnitPrice,

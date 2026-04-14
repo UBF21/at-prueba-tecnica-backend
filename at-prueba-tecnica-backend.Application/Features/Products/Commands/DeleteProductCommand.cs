@@ -7,4 +7,4 @@ namespace at_prueba_tecnica_backend.Application.Features.Products.Commands;
 /// <summary>
 /// Command to delete a product (soft delete via DeletedAt timestamp).
 /// </summary>
-public record DeleteProductCommand(int Id) : IRequest<Result<bool>>;
+public record DeleteProductCommand(Guid Id) : IRequest<Result<bool>>;

@@ -37,8 +37,8 @@ services:
 
   backend:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: at-prueba-tecnica-backend/Dockerfile
     container_name: reto_backend
     environment:
       - ASPNETCORE_ENVIRONMENT=Development

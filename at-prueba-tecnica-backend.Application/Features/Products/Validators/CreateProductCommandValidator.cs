@@ -1,5 +1,5 @@
 using at_prueba_tecnica_backend.Application.Features.Products.Commands;
-using FluentValidation;
+using Vali_Validation.Core.Validators;
 
 namespace at_prueba_tecnica_backend.Application.Features.Products.Validators;
 

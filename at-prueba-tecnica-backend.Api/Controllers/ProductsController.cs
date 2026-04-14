@@ -46,7 +46,7 @@ public class ProductsController : ControllerBase
     /// Retrieves a specific product by ID.
     /// </summary>
     [HttpGet("{id}")]
-    public async Task<ActionResult<ApiResponse<ProductDto>>> GetProductById(int id, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<ProductDto>>> GetProductById(Guid id, CancellationToken ct)
     {
         var query = new GetProductByIdQuery(id);
         var result = await _mediator.Send(query, ct);
@@ -72,7 +72,7 @@ public class ProductsController : ControllerBase
     /// </summary>
     [HttpPut("{id}")]
     public async Task<ActionResult<ApiResponse<ProductDto>>> UpdateProduct(
-        int id,
+        Guid id,
         [FromBody] UpdateProductCommand command,
         CancellationToken ct)
     {
@@ -87,7 +87,7 @@ public class ProductsController : ControllerBase
     /// The product is marked as deleted but not removed from the database.
     /// </summary>
     [HttpDelete("{id}")]
-    public async Task<ActionResult<ApiResponse<bool>>> DeleteProduct(int id, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<bool>>> DeleteProduct(Guid id, CancellationToken ct)
     {
         var command = new DeleteProductCommand(id);
         var result = await _mediator.Send(command, ct);

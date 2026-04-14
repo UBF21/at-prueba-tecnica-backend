@@ -8,4 +8,4 @@ namespace at_prueba_tecnica_backend.Application.Features.Orders.Queries;
 /// <summary>
 /// Query to retrieve a specific order by ID.
 /// </summary>
-public record GetOrderByIdQuery(int Id) : IRequest<Result<OrderDto>>;
+public record GetOrderByIdQuery(Guid Id) : IRequest<Result<OrderDto>>;

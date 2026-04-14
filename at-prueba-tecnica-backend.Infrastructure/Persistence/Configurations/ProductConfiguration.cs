@@ -15,10 +15,17 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.ToTable("Products");
         builder.HasKey(p => p.Id);
 
-        // Audit properties
+        // Id (UUID)
+        builder.Property(p => p.Id)
+            .ValueGeneratedOnAdd()
+            .HasDefaultValueSql("NEWID()");
+
+        // Code (int, autoincrement)
         builder.Property(p => p.Code)
             .IsRequired()
-            .HasMaxLength(36);
+            .ValueGeneratedOnAdd();
+
+        // Audit properties
 
         builder.Property(p => p.CreatedAt)
             .IsRequired()

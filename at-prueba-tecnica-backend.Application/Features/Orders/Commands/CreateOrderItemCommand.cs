@@ -8,5 +8,5 @@ namespace at_prueba_tecnica_backend.Application.Features.Orders.Commands;
 /// <summary>
 /// Command to add an item to an existing order.
 /// </summary>
-public record CreateOrderItemCommand(int OrderId, int ProductId, int Quantity)
+public record CreateOrderItemCommand(Guid OrderId, Guid ProductId, int Quantity)
     : IRequest<Result<OrderDto>>;

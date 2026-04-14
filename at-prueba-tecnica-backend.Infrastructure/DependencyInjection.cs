@@ -41,6 +41,7 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IOrderItemRepository, OrderItemRepository>();
+        services.AddScoped<ICustomerRepository, CustomerRepository>();
 
         // JWT Configuration
         var jwtSettings = new JwtSettings();

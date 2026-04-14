@@ -1,7 +1,7 @@
 using at_prueba_tecnica_backend.Application.Features.Orders.Commands;
 using at_prueba_tecnica_backend.Domain.Entities;
 using at_prueba_tecnica_backend.Domain.Enums;
-using FluentValidation;
+using Vali_Validation.Core.Validators;
 
 namespace at_prueba_tecnica_backend.Application.Features.Orders.Validators;
 
@@ -13,7 +13,7 @@ public class UpdateOrderCommandValidator : AbstractValidator<UpdateOrderCommand>
     public UpdateOrderCommandValidator()
     {
         RuleFor(x => x.Id)
-            .GreaterThan(0).WithMessage("Order ID must be greater than 0");
+            .NotEmpty().WithMessage("Order ID must be valid");
 
         RuleFor(x => x.OrderNumber)
             .MaximumLength(100).WithMessage("Order number must not exceed 100 characters")

@@ -15,10 +15,17 @@ public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
         builder.ToTable("OrderItems");
         builder.HasKey(oi => oi.Id);
 
-        // Audit properties
+        // Id (UUID)
+        builder.Property(oi => oi.Id)
+            .ValueGeneratedOnAdd()
+            .HasDefaultValueSql("NEWID()");
+
+        // Code (int, autoincrement)
         builder.Property(oi => oi.Code)
             .IsRequired()
-            .HasMaxLength(36);
+            .ValueGeneratedOnAdd();
+
+        // Audit properties
 
         builder.Property(oi => oi.CreatedAt)
             .IsRequired()

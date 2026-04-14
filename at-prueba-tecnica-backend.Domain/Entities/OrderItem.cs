@@ -11,11 +11,11 @@ namespace at_prueba_tecnica_backend.Domain.Entities;
 /// </summary>
 public class OrderItem : AuditableEntity
 {
-    /// <summary>Order ID that this item belongs to (required, foreign key).</summary>
-    public int OrderId { get; set; }
+    /// <summary>Order ID (UUID) that this item belongs to (required, foreign key).</summary>
+    public Guid OrderId { get; set; }
 
-    /// <summary>Product ID that this item references (required, foreign key).</summary>
-    public int ProductId { get; set; }
+    /// <summary>Product ID (UUID) that this item references (required, foreign key).</summary>
+    public Guid ProductId { get; set; }
 
     /// <summary>Quantity ordered (required, must be > 0).</summary>
     public int Quantity { get; set; }

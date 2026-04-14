@@ -41,7 +41,6 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Res
 
             var newOrder = new Order
             {
-                Code = Guid.NewGuid().ToString("N").Substring(0, 36),
                 OrderNumber = command.OrderNumber,
                 CustomerId = command.CustomerId,
                 Status = OrderStatus.Pending,

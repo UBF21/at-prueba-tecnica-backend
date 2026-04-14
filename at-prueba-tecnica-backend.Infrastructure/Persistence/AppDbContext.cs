@@ -18,6 +18,7 @@ public class AppDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<Customer> Customers => Set<Customer>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -27,8 +28,8 @@ public class AppDbContext : DbContext
         // Seed: admin user for development
         modelBuilder.Entity<User>().HasData(new User
         {
-            Id = 1,
-            Code = "550e8400-e29b-41d4-a716-446655440000", // Fixed GUID for development
+            Id = new Guid("550e8400-e29b-41d4-a716-446655440000"), // Fixed GUID for development
+            Code = 1, // Sequential code for admin user
             Name = "Administrator",
             Email = "admin@retopedidos.com",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!"),

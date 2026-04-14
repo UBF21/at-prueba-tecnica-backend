@@ -34,7 +34,6 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
 
             var newProduct = new Product
             {
-                Code = Guid.NewGuid().ToString("N").Substring(0, 36),
                 Name = command.Name,
                 Description = command.Description,
                 UnitPrice = command.UnitPrice,

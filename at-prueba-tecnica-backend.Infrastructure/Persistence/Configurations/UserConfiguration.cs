@@ -15,10 +15,17 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.ToTable("Users");
         builder.HasKey(u => u.Id);
 
-        // Audit properties
+        // Id (UUID)
+        builder.Property(u => u.Id)
+            .ValueGeneratedOnAdd()
+            .HasDefaultValueSql("NEWID()");
+
+        // Code (int, autoincrement)
         builder.Property(u => u.Code)
             .IsRequired()
-            .HasMaxLength(36);
+            .ValueGeneratedOnAdd();
+
+        // Audit properties
 
         builder.Property(u => u.CreatedAt)
             .IsRequired()

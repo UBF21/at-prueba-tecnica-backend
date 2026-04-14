@@ -1,5 +1,5 @@
 using at_prueba_tecnica_backend.Application.Features.Orders.Commands;
-using FluentValidation;
+using Vali_Validation.Core.Validators;
 
 namespace at_prueba_tecnica_backend.Application.Features.Orders.Validators;
 
@@ -11,6 +11,6 @@ public class DeleteOrderCommandValidator : AbstractValidator<DeleteOrderCommand>
     public DeleteOrderCommandValidator()
     {
         RuleFor(x => x.Id)
-            .GreaterThan(0).WithMessage("Order ID must be greater than 0");
+            .NotEmpty().WithMessage("Order ID must be valid");
     }
 }

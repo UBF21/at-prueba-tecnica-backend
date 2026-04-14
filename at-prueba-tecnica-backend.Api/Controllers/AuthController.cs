@@ -1,7 +1,8 @@
+using at_prueba_tecnica_backend.Api.Extensions;
+using at_prueba_tecnica_backend.Api.Responses;
 using at_prueba_tecnica_backend.Application.Features.Auth.Commands;
+using at_prueba_tecnica_backend.Application.Features.DTOs;
 using Microsoft.AspNetCore.Mvc;
-using Vali_Mediator.AspNetCore;
-using Vali_Mediator.Core.General;
 using Vali_Mediator.Core.General.Mediator;
 
 namespace at_prueba_tecnica_backend.Api.Controllers;
@@ -25,9 +26,10 @@ public class AuthController : ControllerBase
     /// Retorna un JWT token válido por 60 minutos.
     /// </summary>
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginCommand command, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<LoginResponseDto>>> Login([FromBody] LoginCommand command, CancellationToken ct)
     {
         var result = await _mediator.Send(command, ct);
-        return result.ToActionResult();
+        var response = result.ToApiResponse();
+        return response.Success ? Ok(response) : BadRequest(response);
     }
 }

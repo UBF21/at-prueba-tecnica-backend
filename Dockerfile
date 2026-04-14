@@ -2,21 +2,28 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-# Copiar archivos de solución y proyecto
-COPY ["at-prueba-tecnica-backend.sln", "."]
-COPY ["at-prueba-tecnica-backend.Domain/at-prueba-tecnica-backend.Domain.csproj", "at-prueba-tecnica-backend.Domain/"]
-COPY ["at-prueba-tecnica-backend.Application/at-prueba-tecnica-backend.Application.csproj", "at-prueba-tecnica-backend.Application/"]
-COPY ["at-prueba-tecnica-backend.Infrastructure/at-prueba-tecnica-backend.Infrastructure.csproj", "at-prueba-tecnica-backend.Infrastructure/"]
-COPY ["at-prueba-tecnica-backend.Api/at-prueba-tecnica-backend.Api.csproj", "at-prueba-tecnica-backend.Api/"]
+# Copiar archivo de solución (en la raíz del contexto: RiderProjects)
+# El contexto es .. (parent de at-prueba-tecnica-backend), así que los archivos están en subdirectorios
+
+# Copiar archivos de proyecto del backend
+COPY ["at-prueba-tecnica-backend/at-prueba-tecnica-backend.sln", "."]
+COPY ["at-prueba-tecnica-backend/at-prueba-tecnica-backend.Domain/at-prueba-tecnica-backend.Domain.csproj", "at-prueba-tecnica-backend.Domain/"]
+COPY ["at-prueba-tecnica-backend/at-prueba-tecnica-backend.Application/at-prueba-tecnica-backend.Application.csproj", "at-prueba-tecnica-backend.Application/"]
+COPY ["at-prueba-tecnica-backend/at-prueba-tecnica-backend.Infrastructure/at-prueba-tecnica-backend.Infrastructure.csproj", "at-prueba-tecnica-backend.Infrastructure/"]
+COPY ["at-prueba-tecnica-backend/at-prueba-tecnica-backend.Api/at-prueba-tecnica-backend.Api.csproj", "at-prueba-tecnica-backend.Api/"]
+
+# Copiar nuget.config y local NuGet packages
+COPY ["at-prueba-tecnica-backend/nuget.config", "."]
+COPY ["at-prueba-tecnica-backend/.nuget/", ".nuget/"]
 
 # Restaurar dependencias
-RUN dotnet restore
+RUN dotnet restore at-prueba-tecnica-backend.sln
 
-# Copiar el resto del código
-COPY . .
+# Copiar código fuente del backend
+COPY ["at-prueba-tecnica-backend/", "at-prueba-tecnica-backend/"]
 
 # Publicar en Release
-RUN dotnet publish "at-prueba-tecnica-backend.Api/at-prueba-tecnica-backend.Api.csproj" \
+RUN dotnet publish "at-prueba-tecnica-backend/at-prueba-tecnica-backend.Api/at-prueba-tecnica-backend.Api.csproj" \
     -c Release \
     -o /app/publish
 

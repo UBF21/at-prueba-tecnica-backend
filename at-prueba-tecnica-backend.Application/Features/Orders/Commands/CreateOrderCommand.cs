@@ -8,5 +8,5 @@ namespace at_prueba_tecnica_backend.Application.Features.Orders.Commands;
 /// <summary>
 /// Command to create a new order.
 /// </summary>
-public record CreateOrderCommand(string OrderNumber, int CustomerId)
+public record CreateOrderCommand(string OrderNumber, Guid CustomerId)
     : IRequest<Result<OrderDto>>;

@@ -8,5 +8,5 @@ namespace at_prueba_tecnica_backend.Application.Features.Products.Commands;
 /// <summary>
 /// Command to update an existing product.
 /// </summary>
-public record UpdateProductCommand(int Id, string? Name = null, string? Description = null, decimal? UnitPrice = null, int? Stock = null)
+public record UpdateProductCommand(Guid Id, string? Name = null, string? Description = null, decimal? UnitPrice = null, int? Stock = null)
     : IRequest<Result<ProductDto>>;

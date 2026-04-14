@@ -8,4 +8,4 @@ namespace at_prueba_tecnica_backend.Application.Features.Products.Queries;
 /// <summary>
 /// Query to retrieve a specific product by ID.
 /// </summary>
-public record GetProductByIdQuery(int Id) : IRequest<Result<ProductDto>>;
+public record GetProductByIdQuery(Guid Id) : IRequest<Result<ProductDto>>;

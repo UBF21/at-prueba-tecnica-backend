@@ -69,7 +69,6 @@ public class CreateOrderItemCommandHandler : IRequestHandler<CreateOrderItemComm
             // Create item with price snapshot
             var item = new OrderItem
             {
-                Code = Guid.NewGuid().ToString("N").Substring(0, 36),
                 OrderId = order.Id,
                 ProductId = product.Id,
                 Quantity = command.Quantity,

@@ -2,6 +2,7 @@ namespace at_prueba_tecnica_backend.Api.Responses;
 
 /// <summary>
 /// Generic API response wrapper for paginated list results.
+/// Supports both IReadOnlyList&lt;string&gt; and IReadOnlyDictionary&lt;string, IReadOnlyList&lt;string&gt;&gt; for validation errors.
 /// </summary>
 /// <typeparam name="T">Type of items in the data collection</typeparam>
 public record PaginatedResponse<T>(
@@ -12,7 +13,7 @@ public record PaginatedResponse<T>(
     int Total,
     int TotalPages,
     string? Message = null,
-    IReadOnlyList<string>? Errors = null)
+    object? Errors = null)
 {
     /// <summary>
     /// Creates a successful paginated response.
@@ -31,7 +32,7 @@ public record PaginatedResponse<T>(
     /// <summary>
     /// Creates a failed paginated response with error message.
     /// </summary>
-    public static PaginatedResponse<T> Fail(string message, IReadOnlyList<string>? errors = null)
+    public static PaginatedResponse<T> Fail(string message, object? errors = null)
         => new(Success: false, Data: new List<T>(), Page: 0, PageSize: 0, Total: 0, TotalPages: 0, Message: message, Errors: errors);
 
     /// <summary>
