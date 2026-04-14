@@ -5,8 +5,8 @@ using Microsoft.EntityFrameworkCore;
 namespace at_prueba_tecnica_backend.Infrastructure.Persistence;
 
 /// <summary>
-/// DbContext principal de la aplicación.
-/// Configura todas las entidades, relaciones, índices y global filters (soft delete).
+/// Application DbContext.
+/// Configures all entities, relationships, indexes, and global filters (soft delete).
 /// </summary>
 public class AppDbContext : DbContext
 {
@@ -14,23 +14,25 @@ public class AppDbContext : DbContext
     {
     }
 
-    public DbSet<Pedido> Pedidos => Set<Pedido>();
-    public DbSet<Usuario> Usuarios => Set<Usuario>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Product> Products => Set<Product>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // Aplicar todas las configuraciones de entidades desde este ensamblado
+        // Apply all entity configurations from this assembly
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
-        // Seed: Usuario administrador para el reto
-        modelBuilder.Entity<Usuario>().HasData(new Usuario
+        // Seed: admin user for development
+        modelBuilder.Entity<User>().HasData(new User
         {
             Id = 1,
-            Code = "550e8400-e29b-41d4-a716-446655440000", // GUID fijo para desarrollo
-            Nombre = "Administrador",
+            Code = "550e8400-e29b-41d4-a716-446655440000", // Fixed GUID for development
+            Name = "Administrator",
             Email = "admin@retopedidos.com",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!"),
-            Rol = Rol.Admin,
+            Role = Role.Admin,
             CreatedAt = DateTime.UtcNow
         });
     }
