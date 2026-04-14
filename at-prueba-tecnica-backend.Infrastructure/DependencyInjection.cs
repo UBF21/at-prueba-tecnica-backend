@@ -10,19 +10,19 @@ using Microsoft.Extensions.DependencyInjection;
 namespace at_prueba_tecnica_backend.Infrastructure;
 
 /// <summary>
-/// Extensión de IServiceCollection para registrar servicios de Infrastructure.
+/// IServiceCollection extension to register Infrastructure services.
 /// </summary>
 public static class DependencyInjection
 {
     /// <summary>
-    /// Registra todos los servicios de Infrastructure en el contenedor DI.
-    /// Incluye DbContext, Repositories, JWT y configuración de autenticación.
+    /// Registers all Infrastructure services in the DI container.
+    /// Includes DbContext, Repositories, JWT, and authentication configuration.
     /// </summary>
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // DbContext con SQL Server
+        // DbContext with SQL Server
         var connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
@@ -37,8 +37,9 @@ public static class DependencyInjection
             }));
 
         // Repositories
-        services.AddScoped<IPedidoRepository, PedidoRepository>();
-        services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+        services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IProductRepository, ProductRepository>();
 
         // JWT Configuration
         var jwtSettings = new JwtSettings();
