@@ -14,13 +14,14 @@ public static class PedidoMappingExtensions
     public static PedidoDto ToDto(this Pedido pedido)
     {
         return new PedidoDto(
-            Id: pedido.Id,
+            Code: pedido.Code,
             NumeroPedido: pedido.NumeroPedido,
             Total: pedido.Total,
             Estado: pedido.Estado.ToString(),
             ClienteId: pedido.ClienteId,
-            FechaCreacion: pedido.CreatedAt,
-            FechaModificacion: pedido.UpdatedAt
+            CreatedAt: pedido.CreatedAt,
+            UpdatedAt: pedido.UpdatedAt,
+            DeletedAt: pedido.DeletedAt
         );
     }
 }

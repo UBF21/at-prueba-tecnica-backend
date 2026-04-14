@@ -2,13 +2,15 @@ namespace at_prueba_tecnica_backend.Application.DTOs;
 
 /// <summary>
 /// DTO de Pedido para transferencia de datos entre capas.
+/// Code es el identificador compartible entre ambientes.
 /// </summary>
 public record PedidoDto(
-    int Id,
+    string Code,
     string NumeroPedido,
     decimal Total,
     string Estado,
     int ClienteId,
-    DateTime FechaCreacion,
-    DateTime? FechaModificacion
+    DateTime CreatedAt,
+    DateTime? UpdatedAt,
+    DateTime? DeletedAt
 );

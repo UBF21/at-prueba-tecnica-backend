@@ -46,16 +46,6 @@ public class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
             .HasConversion<string>()
             .HasMaxLength(20);
 
-        builder.Property(u => u.FechaCreacion)
-            .IsRequired()
-            .HasDefaultValueSql("GETUTCDATE()");
-
-        builder.Property(u => u.FechaModificacion);
-
-        builder.Property(u => u.Eliminado)
-            .IsRequired()
-            .HasDefaultValue(false);
-
         // Índices
         builder.HasIndex(u => u.Email)
             .IsUnique()

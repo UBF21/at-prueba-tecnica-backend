@@ -13,7 +13,7 @@ public static class PedidoFilters
     /// Filtro base: excluye pedidos eliminados (soft delete).
     /// </summary>
     public static ValiFlow<Pedido> Activos() =>
-        new ValiFlow<Pedido>().IsNull(p => p.DeletedAt, isNegation: true);
+        new ValiFlow<Pedido>().IsNull(p => p.DeletedAt);
 
     /// <summary>
     /// Filtro por estado (condicional en tiempo de construcción).
