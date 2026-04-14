@@ -1,12 +1,11 @@
 using at_prueba_tecnica_backend.Application.Features.Auth.Commands;
+using at_prueba_tecnica_backend.Application.Features.Auth.Filters;
 using at_prueba_tecnica_backend.Application.Features.Auth.Interfaces;
 using at_prueba_tecnica_backend.Application.Features.DTOs;
 using at_prueba_tecnica_backend.Domain.Entities;
 using at_prueba_tecnica_backend.Domain.Interfaces;
 using BCrypt.Net;
 using Vali_Flow.Classes.Specification;
-using Vali_Flow.Core;
-using Vali_Flow.Core.Builder;
 using Vali_Mediator.Core.Request;
 using Vali_Mediator.Core.Result;
 using Vali_Mediator.Core.General.Behavior;
@@ -35,7 +34,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<LoginRes
         {
             // Buscar usuario por email usando BasicSpecification
             var spec = new BasicSpecification<User>()
-                .WithFilter(new ValiFlowQuery<User>().EqualTo(u => u.Email, command.Email))
+                .WithFilter(UserFilters.ByEmail(command.Email))
                 .WithAsNoTracking(true);
 
             var user = await _userRepo.EvaluateGetFirstAsync(spec, ct);
