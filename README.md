@@ -15,7 +15,7 @@ Demostrar expertise senior en:
 - ✅ **Validación** (fluida y composable)
 - ✅ **Persistencia** (EF Core, soft-delete, migrations)
 - ✅ **Autenticación** (JWT, BCrypt)
-- ✅ **API profesional** (REST, OpenAPI/Swagger)
+- ✅ **API profesional** (REST, OpenAPI/Scalar)
 
 ### Stack Tecnológico
 
@@ -248,7 +248,7 @@ docker-compose up -d --build
 sleep 15
 
 # Backend en: http://localhost:5001
-# Swagger en: http://localhost:5001/swagger
+# Scalar en: http://localhost:5001/scalar
 ```
 
 ### 2️⃣ Local con .NET CLI
