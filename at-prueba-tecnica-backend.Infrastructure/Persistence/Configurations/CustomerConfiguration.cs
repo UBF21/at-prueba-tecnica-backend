@@ -70,7 +70,8 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.HasIndex(c => c.Name)
             .HasDatabaseName("IX_Customers_Name");
 
-        // Global query filter for soft delete - disabled for testing
-        // builder.HasQueryFilter(c => !c.DeletedAt.HasValue);
+        // Global query filter for soft delete
+        // Fixed with Vali-Flow 1.3.4 and Vali-Flow.Core 2.0.2 which properly handle null field checks
+        builder.HasQueryFilter(c => !c.DeletedAt.HasValue);
     }
 }

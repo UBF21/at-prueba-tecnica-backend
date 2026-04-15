@@ -68,6 +68,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasDatabaseName("IX_Products_Name");
 
         // Global query filter: exclude soft-deleted records
-        // builder.HasQueryFilter(p => !p.DeletedAt.HasValue); // Disabled for testing
+        // Fixed with Vali-Flow 1.3.4 and Vali-Flow.Core 2.0.2 which properly handle null field checks
+        builder.HasQueryFilter(p => !p.DeletedAt.HasValue);
     }
 }

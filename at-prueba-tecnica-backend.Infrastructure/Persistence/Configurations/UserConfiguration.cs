@@ -63,6 +63,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasDatabaseName("IX_Users_Code");
 
         // Global query filter: exclude soft-deleted records
-        // builder.HasQueryFilter(u => !u.DeletedAt.HasValue); // Disabled for testing
+        // Fixed with Vali-Flow 1.3.4 and Vali-Flow.Core 2.0.2 which properly handle null field checks
+        builder.HasQueryFilter(u => !u.DeletedAt.HasValue);
     }
 }
