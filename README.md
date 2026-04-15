@@ -874,26 +874,78 @@ Beneficios: Lógica de negocio centralizada, invariantes garantizadas, transacci
 Repositorios con evaluadores de lectura/escritura usando Vali-Flow.
 
 ```csharp
-// IUserRepository.cs
-public interface IUserRepository : IEvaluatorRead<User>, IEvaluatorWrite<User> { }
+// 1️⃣ DEFINIR FILTROS REUTILIZABLES
+public static class CustomerFilters
+{
+    public static ValiFlowQuery<Customer> Active() =>
+        new ValiFlowQuery<Customer>().IsNull(c => c.DeletedAt);
+    
+    public static ValiFlowQuery<Customer> ById(Guid id) =>
+        Active().And().EqualTo(c => c.Id, id);
+    
+    public static ValiFlowQuery<Customer> ByEmail(string email) =>
+        Active().And().EqualTo(c => c.Email, email);
+}
 
-// En handlers - lectura con filtros
-var spec = new QuerySpecification<User>()
-    .WithFilter(UserFilters.Active())
-    .WithOrderBy(u => u.Email)
-    .WithPagination(page, pageSize);
+// 2️⃣ LECTURA PAGINADA (múltiples resultados)
+var spec = new QuerySpecification<Customer>()
+    .WithFilter(CustomerFilters.Active())
+    .WithOrderBy(c => c.Name, ascending: true)
+    .WithPagination(page: 1, pageSize: 10)
+    .WithAsNoTracking(true);
 
-var users = await _repository.EvaluateQueryAsync(spec);
+var queryable = await _repository.EvaluateQueryAsync(spec);
+var customers = await queryable.ToListAsync(ct);
 
-// Escritura - SaveChanges automático
-await _repository.AddAsync(user, saveChanges: true, ct);
+// 3️⃣ LECTURA POR ID (un único resultado)
+var spec = new BasicSpecification<Customer>()
+    .WithFilter(CustomerFilters.ById(customerId))
+    .WithAsNoTracking(true);
+
+var customer = await _repository.EvaluateGetFirstAsync(spec, ct);
+if (customer is null)
+    return Result<CustomerDto>.Fail("Not found", ErrorType.NotFound);
+
+// 4️⃣ ESCRITURA - CREATE
+var newCustomer = new Customer { Name = "...", Email = "..." };
+await _repository.AddAsync(newCustomer, saveChanges: true, ct);
+
+// 5️⃣ ESCRITURA - UPDATE
+customer.Name = "Updated";
+await _repository.UpdateAsync(customer, saveChanges: true, ct);
+
+// 6️⃣ ESCRITURA - DELETE (Soft Delete)
+customer.DeletedAt = DateTime.UtcNow;
+await _repository.UpdateAsync(customer, saveChanges: true, ct);
 ```
 
-Beneficios:
-- ✅ Filtros globales automáticos (soft delete via `HasQueryFilter`)
-- ✅ Queries composables y reutilizables
-- ✅ Sin Unit of Work boilerplate
-- ✅ EF Core maneja transacciones implícitamente
+**Características Vali-Flow:**
+- ✅ `ValiFlowQuery<T>` - Constructor de expresiones LINQ type-safe
+  - `.IsNull(prop)` / `.IsNotNull(prop)` - Validación de nulidad
+  - `.EqualTo(prop, value)` - Igualdad
+  - `.Contains(prop, text)` - Búsqueda parcial
+  - `.And()` / `.Or()` - Combinadores lógicos
+  
+- ✅ `QuerySpecification<T>` - Para listas paginadas
+  - `.WithFilter()` - Aplica el ValiFlowQuery
+  - `.WithOrderBy()` - Ordenamiento
+  - `.WithPagination()` - Offset/limit
+  - `.WithAsNoTracking()` - EF optimización
+
+- ✅ `BasicSpecification<T>` - Para resultados únicos
+  - Mismo API que QuerySpecification pero optimizado para `.FirstAsync()`
+
+- ✅ Métodos del repositorio:
+  - `EvaluateQueryAsync(spec)` → `IQueryable<T>` (lazy)
+  - `EvaluateGetFirstAsync(spec)` → `T | null` (ejecuta directamente)
+  - `AddAsync(entity, saveChanges, ct)` - Insertar
+  - `UpdateAsync(entity, saveChanges, ct)` - Actualizar
+  - `RemoveAsync(entity, saveChanges, ct)` - Eliminar físico
+
+**Sin Unit of Work:**
+- EF Core DbContext maneja transacciones automáticamente
+- SaveChanges ocurre por operación (no combinado)
+- Filtros globales via `HasQueryFilter` excluyen soft-deleted automáticamente
 
 ### RESILIENCIA (Polly via Vali-Mediator.Resilience)
 
