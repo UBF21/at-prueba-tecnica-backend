@@ -1,6 +1,6 @@
 # 🎯 AT — Prueba Técnica Fullstack Senior
 
-**Sistema CQRS de Gestión de Pedidos, Clientes y Productos**  
+**Sistema CQRS de Gestión de Órdenes, Clientes y Productos (Order Management System)**  
 Arquitectura limpia, .NET 9, SQL Server, patrones enterprise con librerías custom UBF21.
 
 ---
@@ -27,8 +27,8 @@ Demostrar expertise senior en:
 | **Vali-Mediator** | 2.0.1 | ⭐ CQRS + Result<T> |
 | **Vali-Validation** | 2.0.1 | ⭐ Validators fluidos |
 | **Vali-Mediator.Resilience** | 1.0.1 | ⭐ Políticas Polly |
-| **Vali-Flow.Core** | 2.0.1 | ⭐ Query builders |
-| **Vali-Flow** | 1.1.0 | ⭐ EF evaluator |
+| **Vali-Flow.Core** | 2.0.2 | ⭐ Query builders |
+| **Vali-Flow** | 1.3.4 | ⭐ EF evaluator |
 | **System.IdentityModel.Tokens.Jwt** | 7.x | JWT tokens |
 | **BCrypt.Net-Core** | 1.x | Password hashing |
 
@@ -52,13 +52,15 @@ Demostrar expertise senior en:
   
 - **Vali-Flow.Core**: Builder de queries LINQ
   - Expression trees type-safe
-  - Filters composables
-  - Predicates y specifications
+  - Filters composables (IsNull, EqualTo, Contains, etc)
+  - Specifications dinámicas con fluent API
+  - Soporte para soft delete (DeletedAt.HasValue)
   
 - **Vali-Flow**: Evaluador para EF Core
-  - Traduce Vali-Flow queries a SQL
-  - Lazy evaluation
-  - Query optimization
+  - Traduce Vali-Flow queries a SQL optimizado
+  - Evaluación perezosa (lazy evaluation)
+  - Integración con HasQueryFilter para filtros globales
+  - Soporte para offset/limit en paginación
 
 ---
 
@@ -136,15 +138,17 @@ at-prueba-tecnica-backend/
 │
 ├── at-prueba-tecnica-backend.Domain/
 │   ├── Entities/
-│   │   ├── Usuario.cs              ← Entidad (usuario + autenticación)
-│   │   ├── Pedido.cs               ← Entidad (order + items)
-│   │   ├── Cliente.cs              ← Entidad (customer)
-│   │   └── Producto.cs             ← Entidad (product)
+│   │   ├── User.cs                 ← Entidad (usuario + autenticación)
+│   │   ├── Order.cs                ← Entidad (order + items)
+│   │   ├── Customer.cs             ← Entidad (customer)
+│   │   ├── Product.cs              ← Entidad (product)
+│   │   └── OrderItem.cs            ← Entidad (item en orden)
 │   ├── Enums/
-│   │   └── EstadoPedido.cs         ← Estados: Pending, Processing, etc
+│   │   ├── Role.cs                 ← Roles: Admin, Customer
+│   │   └── OrderStatus.cs          ← Estados: Pending, Processing, etc
 │   └── Interfaces/
-│       ├── IRepository<T>.cs       ← Abstracción de persistencia
-│       ├── IPedidoRepository.cs    ← Interfaz específica
+│       ├── IUserRepository.cs      ← Interfaz User
+│       ├── IOrderRepository.cs     ← Interfaz Order
 │       └── ...
 │
 ├── at-prueba-tecnica-backend.Application/
@@ -155,24 +159,21 @@ at-prueba-tecnica-backend/
 │   │   │   └── LoginCommandHandler.cs  ← Lógica autenticación
 │   │   └── Validators/
 │   │       └── LoginCommandValidator.cs ← Reglas fluidas
-│   ├── Pedidos/
+│   ├── Orders/
 │   │   ├── Commands/
-│   │   │   ├── CreatePedidoCommand.cs
-│   │   │   ├── UpdatePedidoCommand.cs
-│   │   │   └── DeletePedidoCommand.cs
+│   │   │   ├── CreateOrderCommand.cs
+│   │   │   ├── UpdateOrderCommand.cs
+│   │   │   └── DeleteOrderCommand.cs
 │   │   ├── Queries/
-│   │   │   ├── GetPedidosQuery.cs
-│   │   │   ├── GetPedidoByIdQuery.cs
-│   │   │   └── SearchPedidosQuery.cs
-│   │   ├── Handlers/ (6 handlers)
-│   │   ├── Validators/ (validaciones)
+│   │   │   ├── GetOrdersQuery.cs
+│   │   │   ├── GetOrderByIdQuery.cs
+│   │   ├── Handlers/ (6+ handlers)
+│   │   ├── Validators/ (validaciones fluidas)
 │   │   ├── Filters/ (Vali-Flow query builders)
-│   │   └── DTOs/
-│   │       ├── PedidoDto.cs
-│   │       ├── CreatePedidoRequest.cs
-│   │       └── UpdatePedidoRequest.cs
-│   ├── Clientes/          ← Estructura similar
-│   ├── Productos/         ← Estructura similar
+│   │   └── DTOs/ (DTOs y requests)
+│   ├── Customers/         ← Estructura similar
+│   ├── Products/          ← Estructura similar
+│   ├── Auth/              ← Login, JWT
 │   ├── Behaviors/
 │   │   ├── ValidationBehavior.cs  ← Pre-ejecución validators
 │   │   └── LoggingBehavior.cs     ← Auditoría
@@ -186,15 +187,17 @@ at-prueba-tecnica-backend/
 │   │   ├── AppDbContext.cs         ← EF DbContext
 │   │   ├── AppDbContextFactory.cs  ← Design-time factory
 │   │   ├── Configurations/
-│   │   │   ├── UsuarioConfiguration.cs  ← Fluent API
-│   │   │   ├── PedidoConfiguration.cs
-│   │   │   ├── ClienteConfiguration.cs
-│   │   │   └── ProductoConfiguration.cs
+│   │   │   ├── UserConfiguration.cs    ← Fluent API con HasQueryFilter
+│   │   │   ├── OrderConfiguration.cs
+│   │   │   ├── CustomerConfiguration.cs
+│   │   │   ├── ProductConfiguration.cs
+│   │   │   └── OrderItemConfiguration.cs
 │   │   ├── Repositories/
-│   │   │   ├── UsuarioRepository.cs    ← Hereda DbRepositoryAsync<T>
-│   │   │   ├── PedidoRepository.cs     ← Query evaluation con Vali-Flow
-│   │   │   ├── ClienteRepository.cs
-│   │   │   └── ProductoRepository.cs
+│   │   │   ├── UserRepository.cs       ← Hereda DbRepositoryAsync<T>
+│   │   │   ├── OrderRepository.cs      ← Query evaluation con Vali-Flow
+│   │   │   ├── CustomerRepository.cs
+│   │   │   ├── ProductRepository.cs
+│   │   │   └── OrderItemRepository.cs
 │   │   ├── Seeds/
 │   │   │   └── DataSeeding.cs      ← Datos iniciales (admin user, products)
 │   │   └── Migrations/
@@ -210,10 +213,10 @@ at-prueba-tecnica-backend/
 │   ├── appsettings.Development.json
 │   ├── Program.cs                  ← DI, middlewares, hosts
 │   ├── Controllers/
-│   │   ├── AuthController.cs       ← POST /auth/login
-│   │   ├── PedidosController.cs    ← CRUD /pedidos
-│   │   ├── ClientesController.cs   ← CRUD /clientes
-│   │   └── ProductosController.cs  ← CRUD /productos
+│   │   ├── AuthController.cs       ← POST /api/auth/login
+│   │   ├── OrdersController.cs     ← CRUD /api/orders
+│   │   ├── CustomersController.cs  ← CRUD /api/customers
+│   │   └── ProductsController.cs   ← CRUD /api/products
 │   ├── Middlewares/
 │   │   ├── GlobalExceptionMiddleware.cs  ← Centralización errores
 │   │   └── ExceptionHandlingExtensions.cs
@@ -866,25 +869,31 @@ public class PedidoItem
 
 Beneficios: Lógica de negocio centralizada, invariantes garantizadas, transacciones atómicas.
 
-#### 10. UNIT OF WORK PATTERN
+#### 10. PERSISTENCIA CON VALI-FLOW
 
-Coordinación de cambios en múltiples agregados.
+Repositorios con evaluadores de lectura/escritura usando Vali-Flow.
 
 ```csharp
-public interface IUnitOfWork : IDisposable
-{
-    IPedidoRepository Pedidos { get; }
-    IClienteRepository Clientes { get; }
-    IProductoRepository Productos { get; }
-    
-    Task<int> SaveChangesAsync(CancellationToken ct);
-    Task<bool> BeginTransactionAsync(CancellationToken ct);
-    Task<bool> CommitAsync(CancellationToken ct);
-    Task<bool> RollbackAsync(CancellationToken ct);
-}
+// IUserRepository.cs
+public interface IUserRepository : IEvaluatorRead<User>, IEvaluatorWrite<User> { }
+
+// En handlers - lectura con filtros
+var spec = new QuerySpecification<User>()
+    .WithFilter(UserFilters.Active())
+    .WithOrderBy(u => u.Email)
+    .WithPagination(page, pageSize);
+
+var users = await _repository.EvaluateQueryAsync(spec);
+
+// Escritura - SaveChanges automático
+await _repository.AddAsync(user, saveChanges: true, ct);
 ```
 
-Beneficios: Consistencia transaccional, coordinación entre repositorios.
+Beneficios:
+- ✅ Filtros globales automáticos (soft delete via `HasQueryFilter`)
+- ✅ Queries composables y reutilizables
+- ✅ Sin Unit of Work boilerplate
+- ✅ EF Core maneja transacciones implícitamente
 
 ### RESILIENCIA (Polly via Vali-Mediator.Resilience)
 
