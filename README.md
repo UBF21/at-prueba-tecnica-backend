@@ -527,7 +527,7 @@ Authorization: Bearer <token>
 
 ---
 
-## 🛡️ Patrones & Principios
+## PATRONES & PRINCIPIOS ARQUITECTÓNICOS
 
 ### SOLID
 
@@ -537,19 +537,356 @@ Authorization: Bearer <token>
 - **I** — Interface Segregation: IPedidoRepository solo métodos de Pedido
 - **D** — Dependency Inversion: DI container, abstracciones inyectables
 
-### Patrones
+### PATRONES IMPLEMENTADOS
 
-| Patrón | Implementación |
-|---|---|
-| **CQRS** | Commands, Queries, Handlers, Mediator |
-| **Repository** | DbRepositoryAsync<T>, implementaciones concretas |
-| **Validator** | FluentValidator, comportamiento en pipeline |
-| **Behavior** | Middlewares en mediator (logging, validation, resilience) |
-| **DTO** | Request/Response objects (desacoplados de Domain) |
-| **Factory** | AppDbContextFactory (design-time) |
-| **Soft Delete** | DeletedAt column, filtrado automático |
+#### 1. CQRS (Command Query Responsibility Segregation)
 
-### Resiliencia (Polly via Vali-Mediator.Resilience)
+Separación clara entre operaciones que modifican estado (Commands) y operaciones de lectura (Queries).
+
+Ubicación: Application/Features/[Entity]/{Commands,Queries,Handlers}
+
+Ejemplo de Command:
+```csharp
+// CreatePedidoCommand.cs
+public class CreatePedidoCommand : IRequest<Result<CreatePedidoResponse>>
+{
+    public string OrderNumber { get; set; }
+    public Guid ClienteId { get; set; }
+}
+
+// CreatePedidoCommandHandler.cs
+public class CreatePedidoCommandHandler : IRequestHandler<CreatePedidoCommand, Result<CreatePedidoResponse>>
+{
+    public async Task<Result<CreatePedidoResponse>> Handle(CreatePedidoCommand request, CancellationToken ct)
+    {
+        // Lógica de creación
+    }
+}
+```
+
+Ejemplo de Query:
+```csharp
+// GetPedidosQuery.cs
+public class GetPedidosQuery : IRequest<Result<PaginatedResponse<PedidoDto>>>
+{
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+}
+
+// GetPedidosQueryHandler.cs
+public class GetPedidosQueryHandler : IRequestHandler<GetPedidosQuery, Result<PaginatedResponse<PedidoDto>>>
+{
+    public async Task<Result<PaginatedResponse<PedidoDto>>> Handle(GetPedidosQuery request, CancellationToken ct)
+    {
+        // Lógica de lectura optimizada
+    }
+}
+```
+
+Beneficios: Separación de responsabilidades clara, escalabilidad diferenciada para lecturas/escrituras, testabilidad mejorada.
+
+#### 2. MEDIATOR PATTERN
+
+Bus in-process que enruta Commands/Queries a sus respectivos handlers.
+
+Ubicación: Vali-Mediator (librería custom)
+
+Uso en Controllers:
+```csharp
+[HttpPost("pedidos")]
+public async Task<IActionResult> CreatePedido([FromBody] CreatePedidoRequest request)
+{
+    var command = new CreatePedidoCommand 
+    { 
+        OrderNumber = request.OrderNumber,
+        ClienteId = request.ClienteId 
+    };
+    
+    var result = await _mediator.SendAsync(command, cancellationToken);
+    return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
+}
+```
+
+Beneficios: Desacoplamiento entre Controllers y lógica de negocio, pipeline comportamientos centralizados, testeo sin HTTP.
+
+#### 3. REPOSITORY PATTERN
+
+Abstracción de acceso a datos con interfaz genérica.
+
+Ubicación: Infrastructure/Persistence/Repositories/
+
+Interfaz genérica:
+```csharp
+public interface IRepository<TEntity> where TEntity : BaseEntity
+{
+    Task<TEntity?> GetAsync(Guid id, CancellationToken ct);
+    Task<IEnumerable<TEntity>> GetAllAsync(CancellationToken ct);
+    Task<IEnumerable<TEntity>> GetAsync(ISpecification<TEntity> spec, CancellationToken ct);
+    Task AddAsync(TEntity entity, CancellationToken ct);
+    void Update(TEntity entity);
+    void Delete(TEntity entity);
+    Task<int> SaveChangesAsync(CancellationToken ct);
+}
+```
+
+Implementación concreta:
+```csharp
+public class PedidoRepository : DbRepositoryAsync<Pedido>, IPedidoRepository
+{
+    public PedidoRepository(AppDbContext context) : base(context) { }
+    
+    public async Task<Pedido?> GetByOrderNumberAsync(string orderNumber, CancellationToken ct)
+    {
+        return await _dbSet
+            .Where(p => p.OrderNumber == orderNumber && p.DeletedAt == null)
+            .FirstOrDefaultAsync(ct);
+    }
+}
+```
+
+Beneficios: Independencia de ORM, testing con mocks, queries optimizadas por entidad.
+
+#### 4. DECORATOR/BEHAVIOR PATTERN
+
+Middlewares en el pipeline de mediator que envuelven la ejecución del handler.
+
+Ubicación: Application/Behaviors/
+
+Validación:
+```csharp
+public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+    where TRequest : IRequest<TResponse>
+{
+    private readonly IValidator<TRequest> _validator;
+    
+    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken ct)
+    {
+        var validationResult = await _validator.ValidateAsync(request, ct);
+        if (!validationResult.IsValid)
+            return FailureResult(validationResult.Errors);
+        
+        return await next();
+    }
+}
+```
+
+Logging:
+```csharp
+public class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+{
+    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken ct)
+    {
+        _logger.LogInformation("Ejecutando: {CommandName}", typeof(TRequest).Name);
+        var response = await next();
+        _logger.LogInformation("Completado: {CommandName}", typeof(TRequest).Name);
+        return response;
+    }
+}
+```
+
+Beneficios: Aspectos transversales centralizados (logging, validación, resiliencia), sin contaminar handlers.
+
+#### 5. DATA TRANSFER OBJECT (DTO)
+
+Desacoplamiento entre Domain models y API contracts.
+
+Ubicación: Application/Features/DTOs/
+
+Domain Entity vs DTO:
+```csharp
+// Domain: Pedido.cs (lógica de negocio, validaciones)
+public class Pedido : BaseEntity
+{
+    public string OrderNumber { get; set; }
+    public Guid ClienteId { get; set; }
+    public EstadoPedido Status { get; set; }
+    public decimal Total { get; set; }
+    public void MarkAsShipped() { Status = EstadoPedido.Shipped; }
+}
+
+// DTO: PedidoDto.cs (serialización segura)
+public class PedidoDto
+{
+    public Guid Id { get; set; }
+    public string OrderNumber { get; set; }
+    public string ClienteName { get; set; }
+    public string Status { get; set; }
+    public decimal Total { get; set; }
+}
+```
+
+Request/Response DTOs:
+```csharp
+public class CreatePedidoRequest
+{
+    [Required] public string OrderNumber { get; set; }
+    [Required] public Guid ClienteId { get; set; }
+}
+
+public class CreatePedidoResponse
+{
+    public Guid Id { get; set; }
+    public string OrderNumber { get; set; }
+}
+```
+
+Beneficios: Contrato API estable, oculta complejidad interna, versionado independiente.
+
+#### 6. SPECIFICATION PATTERN
+
+Encapsulatión de lógica de filtrado compleja en objetos reutilizables.
+
+Ubicación: Application/Features/[Entity]/Filters/
+
+Ejemplo:
+```csharp
+public class PedidoFilterSpecification : Specification<Pedido>
+{
+    public PedidoFilterSpecification(PedidoFilter filter)
+    {
+        if (!string.IsNullOrEmpty(filter.OrderNumber))
+            AddCriteria(p => p.OrderNumber.Contains(filter.OrderNumber));
+        
+        if (filter.Status.HasValue)
+            AddCriteria(p => p.Status == filter.Status);
+        
+        if (filter.ClienteId.HasValue)
+            AddCriteria(p => p.ClienteId == filter.ClienteId);
+        
+        AddCriteria(p => p.DeletedAt == null);
+    }
+}
+```
+
+Uso en repository:
+```csharp
+var specification = new PedidoFilterSpecification(filter);
+var pedidos = await _repository.GetAsync(specification, ct);
+```
+
+Beneficios: DRY, queries reutilizables, testeo de lógica de filtrado.
+
+#### 7. FACTORY PATTERN
+
+Creación de instancias complejas desacoplada.
+
+Ubicación: Infrastructure/Persistence/AppDbContextFactory.cs
+
+```csharp
+public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
+{
+    public AppDbContext CreateDbContext(string[] args)
+    {
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json")
+            .Build();
+        
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseSqlServer(configuration.GetConnectionString("DefaultConnection"))
+            .Options;
+        
+        return new AppDbContext(options);
+    }
+}
+```
+
+Beneficios: Migrations sin runtime, configuración centralizada.
+
+#### 8. SOFT DELETE PATTERN
+
+Eliminación lógica en lugar de física.
+
+Ubicación: Domain/Entities/BaseEntity.cs + Infrastructure/Repositories
+
+Base Entity:
+```csharp
+public abstract class BaseEntity
+{
+    public Guid Id { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? DeletedAt { get; set; }
+    
+    public bool IsDeleted => DeletedAt != null;
+    
+    public void Delete() => DeletedAt = DateTime.UtcNow;
+    public void Restore() => DeletedAt = null;
+}
+```
+
+Filtrado automático en queries:
+```csharp
+public async Task<TEntity?> GetAsync(Guid id, CancellationToken ct)
+{
+    return await _dbSet
+        .Where(e => e.Id == id && e.DeletedAt == null)
+        .FirstOrDefaultAsync(ct);
+}
+```
+
+Beneficios: Auditoría completa, recuperación de datos, cumplimiento legal.
+
+#### 9. AGGREGATE PATTERN (Domain-Driven Design)
+
+Agrupación de entidades relacionadas como una unidad atómica.
+
+```csharp
+// Aggregate Root
+public class Pedido : BaseEntity
+{
+    public string OrderNumber { get; set; }
+    public Guid ClienteId { get; set; }
+    private List<PedidoItem> _items = new();
+    
+    public IReadOnlyList<PedidoItem> Items => _items.AsReadOnly();
+    
+    // Invariantes del agregado
+    public void AddItem(Producto producto, int cantidad)
+    {
+        if (cantidad <= 0) throw new InvalidOperationException("Cantidad debe ser > 0");
+        if (Status != EstadoPedido.Pending) throw new InvalidOperationException("No puede agregar items");
+        
+        _items.Add(new PedidoItem { ProductoId = producto.Id, Cantidad = cantidad });
+    }
+    
+    public void RemoveItem(PedidoItem item)
+    {
+        _items.Remove(item);
+    }
+}
+
+// Value Object
+public class PedidoItem
+{
+    public Guid ProductoId { get; set; }
+    public int Cantidad { get; set; }
+    public decimal PrecioUnitario { get; set; }
+}
+```
+
+Beneficios: Lógica de negocio centralizada, invariantes garantizadas, transacciones atómicas.
+
+#### 10. UNIT OF WORK PATTERN
+
+Coordinación de cambios en múltiples agregados.
+
+```csharp
+public interface IUnitOfWork : IDisposable
+{
+    IPedidoRepository Pedidos { get; }
+    IClienteRepository Clientes { get; }
+    IProductoRepository Productos { get; }
+    
+    Task<int> SaveChangesAsync(CancellationToken ct);
+    Task<bool> BeginTransactionAsync(CancellationToken ct);
+    Task<bool> CommitAsync(CancellationToken ct);
+    Task<bool> RollbackAsync(CancellationToken ct);
+}
+```
+
+Beneficios: Consistencia transaccional, coordinación entre repositorios.
+
+### RESILIENCIA (Polly via Vali-Mediator.Resilience)
 
 ```csharp
 // En ResilienceBehavior.cs
