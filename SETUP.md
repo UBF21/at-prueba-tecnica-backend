@@ -66,53 +66,48 @@ cp .env.example .env
 ### 5️⃣ Levantar SQL Server
 
 ```bash
-docker compose up -d sqlserver
+docker-compose up -d sqlserver
 # Esperar 30s a que inicie
 
 # Verificar que está corriendo
-docker ps | grep sqlserver
-# Debe mostrar: at_sqlserver ... Up
+docker ps | grep reto_sqlserver
+# Debe mostrar: reto_sqlserver ... Up
 ```
 
 ### 6️⃣ Verificar conexión a BD
 
 ```bash
 # Desde el terminal, conectar a SQL Server
-docker exec -it at_sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "RetoPedidos_Pass123!" -Q "SELECT 'Connection OK'"
+docker exec -it reto_sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "SqlServer123!" -Q "SELECT 'Connection OK'"
 # Debe mostrar: Connection OK
 ```
 
 ---
 
-## 🛠️ Ahora ya estás listo para implementar
+## 🛠️ El proyecto ya está implementado
 
-Siguiendo el plan en `/claude/plans/delightful-sauteeing-goblet.md`:
+**No necesitas crear archivos ni ejecutar migraciones.** El proyecto incluye:
 
-1. **FASE 1: Domain Layer** → Entidades, interfaces, enums
-2. **FASE 2: Application Layer** → Commands, queries, validators, behaviors
-3. **FASE 3: Infrastructure Layer** → DbContext, repositories, JWT
-4. **FASE 4: API Layer** → Controllers, middlewares, Program.cs
+- ✅ Todas las entidades, commands, queries, handlers
+- ✅ Validación fluida con Vali-Validation
+- ✅ Persistencia con EF Core y Vali-Flow
+- ✅ Base de datos se recrea automáticamente en cada inicio (sin migraciones)
+- ✅ Autenticación JWT
 
-Luego aplicar migraciones:
-
-```bash
-# Crear migración
-dotnet ef migrations add InitialCreate \
-  --project at-prueba-tecnica-backend.Infrastructure \
-  --startup-project at-prueba-tecnica-backend.Api
-
-# Aplicar
-dotnet ef database update \
-  --project at-prueba-tecnica-backend.Infrastructure \
-  --startup-project at-prueba-tecnica-backend.Api
-```
-
-Finalmente:
+Solo ejecuta:
 
 ```bash
+# Opción 1: Con Docker Compose (recomendado)
+docker-compose up -d --build
+# Esperar ~15 segundos
+# API en http://localhost:5001
+# Scalar en http://localhost:5001/scalar
+
+# Opción 2: Local con .NET CLI
+docker-compose up -d sqlserver  # Solo BD
 dotnet run --project at-prueba-tecnica-backend.Api
-# API en https://localhost:5000
-# Swagger en https://localhost:5000/swagger
+# API en http://localhost:5000
+# Scalar en http://localhost:5000/scalar
 ```
 
 ---
@@ -140,10 +135,11 @@ dotnet run --project at-prueba-tecnica-backend.Api
 
 ## 📖 Documentación
 
-- Plan completo: `/Users/feliperafaelmontenegro/.claude/plans/delightful-sauteeing-goblet.md`
-- README: `./README.md`
-- Este setup: `./SETUP.md`
+- README: `./README.md` — Arquitectura general y patrones
+- PROJECT_STRUCTURE: `./PROJECT_STRUCTURE.md` — Estructura de directorios
+- SETUP: `./SETUP.md` — Este archivo
+- DOCKER_SETUP: `./DOCKER_SETUP.md` — Guía Docker Compose
 
 ---
 
-**¡Listo para comenzar!** 🚀
+**¡Todo listo para usar!** 🚀

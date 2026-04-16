@@ -13,56 +13,72 @@ at-prueba-tecnica-backend/
 │   ├── Properties/
 │   ├── at-prueba-tecnica-backend.Domain.csproj
 │   ├── Entities/
-│   │   ├── Usuario.cs
-│   │   └── Pedido.cs
+│   │   ├── User.cs
+│   │   ├── Order.cs
+│   │   ├── OrderItem.cs
+│   │   ├── Customer.cs
+│   │   ├── Product.cs
+│   │   └── AuditableEntity.cs
 │   ├── Enums/
-│   │   └── EstadoPedido.cs
+│   │   ├── Role.cs
+│   │   └── OrderStatus.cs
 │   └── Interfaces/
-│       ├── IPedidoRepository.cs
-│       └── IUsuarioRepository.cs
+│       ├── IUserRepository.cs
+│       ├── IOrderRepository.cs
+│       ├── IOrderItemRepository.cs
+│       ├── ICustomerRepository.cs
+│       └── IProductRepository.cs
 │
 ├── at-prueba-tecnica-backend.Application/  ← Capa de Aplicación (CQRS)
 │   ├── bin/
 │   ├── obj/
 │   ├── Properties/
 │   ├── at-prueba-tecnica-backend.Application.csproj
-│   ├── Auth/
-│   │   ├── Commands/
-│   │   │   └── LoginCommand.cs
-│   │   ├── Handlers/
-│   │   │   └── LoginCommandHandler.cs
-│   │   └── Validators/
-│   │       └── LoginCommandValidator.cs
-│   ├── Pedidos/
-│   │   ├── Commands/
-│   │   │   ├── CreatePedidoCommand.cs
-│   │   │   ├── UpdatePedidoCommand.cs
-│   │   │   └── DeletePedidoCommand.cs
-│   │   ├── Queries/
-│   │   │   ├── GetPedidosQuery.cs
-│   │   │   └── GetPedidoByIdQuery.cs
-│   │   ├── Handlers/
-│   │   │   ├── CreatePedidoCommandHandler.cs
-│   │   │   ├── UpdatePedidoCommandHandler.cs
-│   │   │   ├── DeletePedidoCommandHandler.cs
-│   │   │   ├── GetPedidosQueryHandler.cs
-│   │   │   └── GetPedidoByIdQueryHandler.cs
-│   │   ├── Validators/
-│   │   │   ├── CreatePedidoCommandValidator.cs
-│   │   │   └── UpdatePedidoCommandValidator.cs
-│   │   ├── Filters/
-│   │   │   └── PedidoFilters.cs              ← Vali-Flow builders
-│   │   ├── DTOs/
-│   │   │   ├── PedidoDto.cs
-│   │   │   ├── CreatePedidoRequest.cs
-│   │   │   └── UpdatePedidoRequest.cs
+│   ├── Features/
+│   │   ├── Auth/
+│   │   │   ├── Commands/
+│   │   │   │   └── LoginCommand.cs
+│   │   │   ├── Filters/
+│   │   │   │   └── UserFilters.cs           ← Vali-Flow query builders
+│   │   │   ├── Handlers/
+│   │   │   │   └── LoginCommandHandler.cs
+│   │   │   └── Validators/
+│   │   │       └── LoginCommandValidator.cs
+│   │   ├── Orders/
+│   │   │   ├── Commands/
+│   │   │   │   ├── CreateOrderCommand.cs
+│   │   │   │   ├── UpdateOrderCommand.cs
+│   │   │   │   └── DeleteOrderCommand.cs
+│   │   │   ├── Queries/
+│   │   │   │   ├── GetOrdersQuery.cs
+│   │   │   │   └── GetOrderByIdQuery.cs
+│   │   │   ├── Handlers/ (6+ handlers)
+│   │   │   ├── Filters/
+│   │   │   │   ├── OrderFilters.cs
+│   │   │   │   └── OrderItemFilters.cs
+│   │   │   ├── Validators/
+│   │   │   └── DTOs/
+│   │   ├── Customers/
+│   │   │   ├── Commands/
+│   │   │   ├── Queries/
+│   │   │   ├── Handlers/ (CRUD handlers)
+│   │   │   ├── Filters/
+│   │   │   │   └── CustomerFilters.cs
+│   │   │   ├── Validators/
+│   │   │   └── DTOs/
+│   │   ├── Products/
+│   │   │   ├── Commands/
+│   │   │   ├── Queries/
+│   │   │   ├── Handlers/ (CRUD handlers)
+│   │   │   ├── Filters/
+│   │   │   │   └── ProductFilters.cs
+│   │   │   ├── Validators/
+│   │   │   └── DTOs/
+│   │   ├── DTOs/ (Shared DTOs)
+│   │   └── Mappings/ (AutoMapper profiles)
 │   ├── Behaviors/
-│   │   ├── LoggingBehavior.cs
-│   │   └── ValidationBehavior.cs
-│   ├── Mappings/
-│   │   └── PedidoMappingExtensions.cs
-│   └── Marker/
-│       └── ApplicationAssemblyMarker.cs
+│   │   └── LoggingBehavior.cs              ← Validación integrada vía Vali-Mediator
+│   └── ApplicationAssemblyMarker.cs        ← Para DI reflection
 │
 ├── at-prueba-tecnica-backend.Infrastructure/  ← Capa de Infraestructura
 │   ├── bin/
@@ -70,18 +86,22 @@ at-prueba-tecnica-backend/
 │   ├── Properties/
 │   ├── at-prueba-tecnica-backend.Infrastructure.csproj
 │   ├── Persistence/
-│   │   ├── AppDbContext.cs
+│   │   ├── AppDbContext.cs                 ← EF DbContext con OnModelCreating seed
 │   │   ├── AppDbContextFactory.cs           ← Design-time factory para EF
 │   │   ├── Configurations/
-│   │   │   ├── PedidoConfiguration.cs
-│   │   │   └── UsuarioConfiguration.cs
+│   │   │   ├── UserConfiguration.cs         ← Fluent API + HasQueryFilter soft delete
+│   │   │   ├── OrderConfiguration.cs
+│   │   │   ├── OrderItemConfiguration.cs
+│   │   │   ├── CustomerConfiguration.cs
+│   │   │   └── ProductConfiguration.cs
 │   │   ├── Repositories/
-│   │   │   ├── PedidoRepository.cs          ← Hereda DbRepositoryAsync<T>
-│   │   │   └── UsuarioRepository.cs
-│   │   ├── Seeds/
-│   │   │   └── DataSeeding.cs               ← Seed de datos iniciales
+│   │   │   ├── UserRepository.cs            ← Hereda DbRepositoryAsync<T>
+│   │   │   ├── OrderRepository.cs
+│   │   │   ├── OrderItemRepository.cs
+│   │   │   ├── CustomerRepository.cs
+│   │   │   └── ProductRepository.cs
 │   │   └── Migrations/
-│   │       └── (auto-generadas)
+│   │       └── (auto-generadas por EF)
 │   ├── Auth/
 │   │   ├── JwtTokenService.cs
 │   │   └── JwtSettings.cs
@@ -98,12 +118,14 @@ at-prueba-tecnica-backend/
 │   ├── Program.cs                          ← Main: DI, middlewares, config
 │   ├── Controllers/
 │   │   ├── AuthController.cs
-│   │   └── PedidosController.cs
+│   │   ├── OrdersController.cs
+│   │   ├── CustomersController.cs
+│   │   └── ProductsController.cs
 │   ├── Middlewares/
 │   │   ├── GlobalExceptionMiddleware.cs
 │   │   └── ExceptionHandlingExtensions.cs
 │   └── Extensions/
-│       ├── MigrationExtensions.cs           ← Auto-apply migrations
+│       ├── MigrationExtensions.cs           ← EnsureDeletedAsync + EnsureCreatedAsync
 │       └── AuthenticationExtensions.cs
 │
 ├── docker-compose.yml                       ← SQL Server + otros servicios
@@ -152,21 +174,25 @@ Domain (Entidades y contratos)
 
 ### Application
 - `Vali-Mediator` v2.0.1
-- `Vali-Validation` v2.0.1
-- `Vali-Validation.ValiMediator` v1.0.1
-- `Vali-Mediator.Resilience` v1.0.1
+- `Vali-Validation` v2.0.2
+- `Vali-Validation.ValiMediator` v1.0.3
+- `Vali-Mediator.Resilience` v1.1.0
 - `Vali-Flow.Core` v2.0.1
+- `FluentValidation` v11.9.2
 
 ### Infrastructure
-- `Vali-Flow` v1.1.0
-- `Microsoft.EntityFrameworkCore.SqlServer` v9.0.0
-- `Microsoft.EntityFrameworkCore.Tools` v9.0.0
-- `BCrypt.Net-Next` v4.0.3
+- `Vali-Flow` v1.3.4
+- `Vali-Flow.Core` v2.0.2
+- `Microsoft.EntityFrameworkCore.SqlServer` v9.0.15
+- `Microsoft.EntityFrameworkCore.Tools` v9.0.15
+- `BCrypt.Net-Next` v4.1.0
 - (+ referencia a Application)
 
 ### Api
 - `Microsoft.AspNetCore.Authentication.JwtBearer` v9.0.0
-- `Vali-Mediator.AspNetCore` v1.0.1
+- `Vali-Mediator.AspNetCore` v1.1.0
+- `Scalar.AspNetCore` v2.13.22
+- `Microsoft.AspNetCore.OpenApi` v9.0.0
 - (+ referencia a Infrastructure)
 
 ---
@@ -175,53 +201,53 @@ Domain (Entidades y contratos)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  HTTP POST /api/pedidos                                         │
+│  HTTP POST /api/orders                                          │
 │  Authorization: Bearer eyJhbGc...                              │
-│  { "numeroPedido": "PED-001", "total": 100 }                   │
+│  { "orderNumber": "ORD-001", "total": 100 }                    │
 └─────────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │  API Layer (Controllers)                                        │
-│  - PedidosController.Create()                                  │
-│  - Deserializa JSON → CreatePedidoCommand                      │
+│  - OrdersController.Create()                                   │
+│  - Deserializa JSON → CreateOrderCommand                       │
 │  - Llama mediator.Send(command)                                │
 └─────────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │  Application Layer (Behaviors Pipeline)                         │
-│  1. LoggingBehavior         → Log "START CreatePedidoCommand"  │
-│  2. ValidationBehavior      → Vali-Validation                  │
+│  1. LoggingBehavior         → Log "START CreateOrderCommand"   │
+│  2. ValidationBehavior      → Vali-Validation (integrado)      │
 │  3. ResilienceBehavior      → Circuit Breaker, Retry, etc      │
 │  4. Siguiente en pipeline...                                   │
 └─────────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │  Application Layer (Handler)                                   │
-│  - CreatePedidoCommandHandler.Handle()                         │
-│  - Lógica de negocio: validar unicidad NumeroPedido           │
+│  - CreateOrderCommandHandler.Handle()                          │
+│  - Lógica de negocio: validar unicidad OrderNumber            │
 │  - Llamar repository.AddAsync()                                │
-│  - Retornar Result<PedidoDto>                                  │
+│  - Retornar Result<OrderDto>                                   │
 └─────────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │  Infrastructure Layer (Repository)                             │
-│  - PedidoRepository.AddAsync()                                 │
+│  - OrderRepository.AddAsync()                                  │
 │  - Hereda de DbRepositoryAsync<T> (Vali-Flow)                 │
 │  - Llamar DbContext.SaveChangesAsync()                         │
 └─────────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │  Persistence (EF Core → SQL Server)                            │
-│  - INSERT INTO Pedidos (NumeroPedido, Total, ...) VALUES (...)│
-│  - COMMIT                                                      │
+│  - INSERT INTO Orders (OrderNumber, Total, ...) VALUES (...)  │
+│  - COMMIT (transacción implícita vía EF)                       │
 └─────────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│  Return Result<PedidoDto> (éxito o error)                     │
+│  Return Result<OrderDto> (éxito o error)                       │
 │  → Mapeo automático a HTTP Status Code                        │
 │  → 201 Created (si todo OK)                                    │
 │  → 400 Bad Request (si validación falla)                       │
-│  → 409 Conflict (si NumeroPedido duplicado)                    │
+│  → 409 Conflict (si OrderNumber duplicado)                     │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -250,9 +276,9 @@ Startup (Program.cs)
     │   ├── Autenticación JWT
     │   └── CORS
     ├── 3. Crear middleware pipeline
-    ├── 4. Auto-apply EF Core migrations (MigrationExtensions)
-    ├── 5. Seed datos iniciales (si no existen)
-    └── 6. Listen en https://localhost:5000
+    ├── 4. Eliminar y recrear base de datos (EnsureDeletedAsync + EnsureCreatedAsync)
+    ├── 5. Seed datos iniciales en AppDbContext.OnModelCreating()
+    └── 6. Listen en http://localhost:5001 (Docker) o http://localhost:5000 (local)
             ↓
     Request HTTP
             ↓
@@ -267,53 +293,16 @@ Startup (Program.cs)
 
 ---
 
-## 📚 Próximos archivos a crear
+## ✅ Estado actual
 
-Una vez ejecutes `init-project.sh`, necesitarás crear:
+**El proyecto está completamente implementado.** Todos los archivos listados en el árbol de directorios existen y funcionan:
 
-**Domain/**
-- `Entities/Pedido.cs`
-- `Entities/Usuario.cs`
-- `Enums/EstadoPedido.cs`
-- `Interfaces/IPedidoRepository.cs`
-- `Interfaces/IUsuarioRepository.cs`
-
-**Application/**
-- `Auth/Commands/LoginCommand.cs`
-- `Auth/Handlers/LoginCommandHandler.cs`
-- `Auth/Validators/LoginCommandValidator.cs`
-- `Pedidos/Commands/*`
-- `Pedidos/Queries/*`
-- `Pedidos/Handlers/*`
-- `Pedidos/Validators/*`
-- `Pedidos/Filters/PedidoFilters.cs`
-- `Pedidos/DTOs/*`
-- `Behaviors/LoggingBehavior.cs`
-- `Mappings/PedidoMappingExtensions.cs`
-- `Marker/ApplicationAssemblyMarker.cs`
-
-**Infrastructure/**
-- `Persistence/AppDbContext.cs`
-- `Persistence/AppDbContextFactory.cs`
-- `Persistence/Configurations/*`
-- `Persistence/Repositories/PedidoRepository.cs`
-- `Persistence/Repositories/UsuarioRepository.cs`
-- `Auth/JwtTokenService.cs`
-- `Auth/JwtSettings.cs`
-- `DependencyInjection.cs`
-
-**Api/**
-- `appsettings.json`
-- `Controllers/AuthController.cs`
-- `Controllers/PedidosController.cs`
-- `Middlewares/GlobalExceptionMiddleware.cs`
-- `Extensions/MigrationExtensions.cs`
-- `Program.cs` (configuración completa)
-
-**Archivos de configuración:**
-- `appsettings.json` (conexión BD, JWT)
-- `appsettings.Development.json`
-
----
-
-**¡Estructura lista para iniciar implementación!** 🚀
+- ✅ Todas las entidades (User, Order, OrderItem, Customer, Product)
+- ✅ Todas las capas (Domain, Application, Infrastructure, Api)
+- ✅ CQRS completo con múltiples commands/queries
+- ✅ Validación fluida con Vali-Validation
+- ✅ Persistencia con Vali-Flow y EF Core
+- ✅ Autenticación JWT
+- ✅ Resiliencia (Circuit Breaker, Retry, Timeout)
+- ✅ Documentación OpenAPI con Scalar
+- ✅ Docker Compose para desarrollo

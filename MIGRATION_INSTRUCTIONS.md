@@ -1,89 +1,122 @@
-# Database Migration Instructions
+# Database Initialization (NOT EF Core Migrations)
 
-## Overview
+## ⚠️ Important: Project Uses EnsureCreated, NOT Migrations
 
-The backend has been refactored to use **Guid (UUID) as primary keys** with **int Code as sequential identifiers** for public references. A new **Customers** table has been created.
+**This project does NOT use `dotnet ef migrations` for database updates.** 
 
-## What Changed
+Instead:
+- The database schema is defined entirely in **EF Core Fluent API** configurations (`*Configuration.cs` files)
+- Each time the application starts, it:
+  1. **Deletes** the existing database (`EnsureDeletedAsync()`)
+  2. **Recreates** the schema from scratch (`EnsureCreatedAsync()`)
+  3. **Seeds** initial data in `AppDbContext.OnModelCreating()`
 
-### Type Changes
-- **User**: `Id: int → Guid`, `Code: string → int`
-- **Product**: `Id: int → Guid`, `Code: string → int`
-- **Order**: `Id: int → Guid`, `Code: string → int`, `CustomerId: int → Guid`
-- **OrderItem**: `Id: int → Guid`, `Code: string → int`, `OrderId: int → Guid`, `ProductId: int → Guid`
+This means:
+- ✅ **All schema changes are automatic** — just modify the `*Configuration.cs` files
+- ✅ **No manual migration scripts needed**
+- ✅ **Development database always matches EF Core definitions**
+- ❌ **Data does NOT persist** between application restarts (by design)
 
-### New Table
-- **Customer**: `Id: Guid (PK)`, `Code: int (sequential)`, Name, Email, Phone, Address, audit timestamps
+## What's Currently in the Schema
 
-## How to Apply the Migration
+### Entities (All use Guid as PK + int Code)
+- **User**: Auth users with JWT support
+- **Customer**: Customer information
+- **Product**: Product catalog
+- **Order**: Orders (linked to Customers)
+- **OrderItem**: Line items in orders
 
-### Option 1: Using dotnet ef (Recommended)
+### Schema Features
+- **Soft delete**: All tables have `DeletedAt` nullable timestamp
+- **Global filters**: `HasQueryFilter(e => !e.DeletedAt.HasValue)` excludes soft-deleted records
+- **Audit columns**: `CreatedAt`, `UpdatedAt`, `DeletedAt` on all entities
+- **Sequential codes**: `Code: int` auto-incremented for user-friendly references
+
+## For Development
+
+No action needed. Just start the backend:
 
 ```bash
-cd ~/RiderProjects/at-prueba-tecnica-backend
+# Docker (includes BD recreation)
+docker-compose up -d --build
 
-# Install EF Core CLI if needed
-dotnet tool install --global dotnet-ef
-
-# Generate the migration script
-dotnet ef migrations script --from 0 --output migration.sql
-
-# Apply the migration
-dotnet ef database update
+# Or local
+docker-compose up -d sqlserver
+dotnet run --project at-prueba-tecnica-backend.Api
 ```
 
-### Option 2: Manual SQL Execution
+The database will be automatically created and seeded.
 
-The migration file is located at:
+## To Modify the Schema
+
+1. **Edit** the entity configuration in `Infrastructure/Persistence/Configurations/*Configuration.cs`
+2. **Restart** the backend
+3. The database will be recreated with your changes
+
+Example: To add a new column to `Customer`:
+
+```csharp
+// In CustomerConfiguration.cs
+builder.Property(c => c.NewColumn)
+    .HasMaxLength(100);
 ```
-at-prueba-tecnica-backend.Infrastructure/Persistence/Migrations/20260414_RefactorToGuidIdsWithIntCode.cs
-```
 
-If you need to execute the migration manually, extract the SQL from the Migration file and run it in SQL Server Management Studio.
+Then restart the application and the schema updates automatically.
 
-## Important Notes
+## Verification After Startup
 
-- ⚠️ This migration **cannot be safely reverted** (Down method throws NotSupportedException)
-- All existing data will be migrated automatically
-- New Guid IDs will be generated using `NEWID()` SQL function
-- Sequential Code values will be auto-generated
-- Admin user seed data has been updated with Guid Id and int Code
-
-## Verification
-
-After running the migration, verify:
-
-1. All tables have been updated with new column types
-2. Customers table exists with correct schema
-3. Indexes are properly recreated
-4. Foreign key constraints are in place
+Once the backend starts, the database is ready:
 
 ```sql
--- Check Customers table
-SELECT * FROM Customers;
+-- Check tables exist
+SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'dbo';
 
--- Check Users have Guid IDs
-SELECT TOP 1 Id, Code, Email FROM Users;
+-- Check seed admin user
+SELECT Id, Code, Email FROM Users WHERE Email = 'admin@retopedidos.com';
 
--- Check Orders reference Customers correctly
-SELECT TOP 1 o.Id, o.Code, o.CustomerId, c.Code as CustomerCode FROM Orders o 
-LEFT JOIN Customers c ON o.CustomerId = c.Id;
+-- Check soft delete filter works
+SELECT COUNT(*) FROM Customers;  -- Counts only non-deleted
+SELECT COUNT(*) FROM Customers WITH (NOLOCK) WHERE DeletedAt IS NOT NULL;  -- Manually check deleted
 ```
 
-## Next Steps
+## Testing the API
 
-After migration:
-1. Run the backend: `dotnet run` in the API project
-2. Test endpoints with Postman or the frontend
-3. Login at `http://localhost:5176` (frontend is running on port 5176)
-4. Navigate to /customers to see the new Customer CRUD interface
+After the backend starts:
+
+1. **Login** with admin credentials:
+   ```bash
+   curl -X POST http://localhost:5001/api/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{"email":"admin@retopedidos.com","password":"Admin123!"}'
+   ```
+
+2. **View API Docs**: http://localhost:5001/scalar
+
+3. **Test CRUD endpoints**:
+   - GET `/api/customers` - List customers
+   - POST `/api/customers` - Create customer
+   - GET `/api/orders` - List orders
+   - POST `/api/products` - Create product
 
 ## Troubleshooting
 
-If the migration fails:
-1. Check SQL Server is running: `sqlserver --version`
-2. Verify connection string in `appsettings.json`
-3. Check that the database exists and is accessible
-4. Review the error message in the Output window
+### "Connection string error" or "Cannot connect to database"
+```bash
+# Verify SQL Server is running
+docker ps | grep reto_sqlserver
 
-For questions or issues, refer to the backend logs or SQL Server error logs.
+# Check logs
+docker logs reto_sqlserver
+
+# Manual test
+docker exec -it reto_sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "SqlServer123!" -Q "SELECT 1"
+```
+
+### "Tables don't exist"
+- Database should auto-create on startup
+- Check logs: `docker logs <backend-container>`
+- Ensure `AppDbContext.OnModelCreating()` is executing
+
+### "Seed data missing"
+- Admin user seeds automatically in `AppDbContext.OnModelCreating()`
+- If missing, check the code in `AppDbContext.cs` lines 28-38
