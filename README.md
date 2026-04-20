@@ -26,7 +26,7 @@ Demostrar expertise senior en:
 | **Entity Framework Core** | 9.0 | ORM |
 | **Vali-Mediator** | 2.0.1 | ⭐ CQRS + Result<T> |
 | **Vali-Validation** | 2.0.1 | ⭐ Validators fluidos |
-| **Vali-Mediator.Resilience** | 1.1.0 | ⭐ Políticas de resiliencia (sin Polly) |
+| **Vali-Mediator.Resilience** | 1.2.0 | ⭐ Políticas de resiliencia (sin Polly) |
 | **Vali-Flow.Core** | 2.0.2 | ⭐ Query builders |
 | **Vali-Flow** | 1.3.4 | ⭐ EF evaluator |
 | **System.IdentityModel.Tokens.Jwt** | 7.x | JWT tokens |
@@ -955,65 +955,53 @@ La integración con el mediator se activa via `config.AddResilienceBehavior()` e
 registry singleton (`AddResilienceRegistry`) para compartir el estado del Circuit Breaker entre
 comandos que accedan al mismo recurso.
 
-Los comandos críticos implementan `IResilient` y declaran su política como campo `static readonly`
-(evaluado una sola vez, cache óptimo):
+Las políticas se declaran en `Application/DependencyInjection.cs` — desacopladas de los commands
+(patrón **Policy Provider**, introducido en v1.2.0 que deprecó `IResilient`):
 
 ```csharp
-// CreateOrderCommand — Retry×3 jitter + CircuitBreaker(5/30s) + Timeout 30s
-public record CreateOrderCommand(string OrderNumber, Guid CustomerId)
-    : IRequest<Result<OrderDto>>, IResilient
-{
-    private static readonly ResiliencePolicy _policy = ResiliencePolicy
-        .Create("create-order")
-        .Retry(o =>
+// LoginCommand — rate limit por email (5 req/min) + retry + circuit breaker + timeout
+services.AddResiliencePolicy<LoginCommand>(_ =>
+    ResiliencePolicy.Create("login")
+        .RateLimiter(o =>
         {
-            o.MaxRetries = 3;
-            o.BackoffType = BackoffType.ExponentialWithJitter;
-            o.InitialDelay = TimeSpan.FromMilliseconds(200);
-            o.MaxDelay = TimeSpan.FromSeconds(5);
+            o.Algorithm = RateLimiterAlgorithm.SlidingWindow;
+            o.PermitLimit = 5;
+            o.Window = TimeSpan.FromMinutes(1);
+            o.PartitionKeyResolver = r => ((LoginCommand)r).Email;  // por cuenta, no global
         })
-        .CircuitBreaker(o =>
-        {
-            o.CircuitKey = "create-order";
-            o.FailureThreshold = 5;
-            o.SamplingDuration = TimeSpan.FromSeconds(30);
-            o.BreakDuration = TimeSpan.FromSeconds(60);
-        })
-        .Timeout(TimeSpan.FromSeconds(30))
-        .Build();
-
-    public ResiliencePolicy Policy => _policy;
-}
-
-// LoginCommand — Retry×3 jitter + CircuitBreaker(5/30s) + Timeout 10s
-public record LoginCommand(string Email, string Password)
-    : IRequest<Result<LoginResponseDto>>, IResilient
-{
-    private static readonly ResiliencePolicy _policy = ResiliencePolicy
-        .Create("login")
-        .Retry(o =>
-        {
-            o.MaxRetries = 3;
-            o.BackoffType = BackoffType.ExponentialWithJitter;
-            o.InitialDelay = TimeSpan.FromMilliseconds(100);
-            o.MaxDelay = TimeSpan.FromSeconds(3);
-        })
-        .CircuitBreaker(o =>
-        {
-            o.CircuitKey = "login";
-            o.FailureThreshold = 5;
-            o.SamplingDuration = TimeSpan.FromSeconds(30);
-            o.BreakDuration = TimeSpan.FromSeconds(60);
-        })
+        .Retry(o => { o.MaxRetries = 3; o.BackoffType = BackoffType.ExponentialWithJitter; })
+        .CircuitBreaker(o => { o.CircuitKey = "login"; o.FailureThreshold = 5; })
         .Timeout(TimeSpan.FromSeconds(10))
-        .Build();
+        .Build());
 
-    public ResiliencePolicy Policy => _policy;
-}
+// CreateOrderCommand — bulkhead + retry + circuit breaker + timeout
+services.AddResiliencePolicy<CreateOrderCommand>(_ =>
+    ResiliencePolicy.Create("create-order")
+        .Bulkhead(o => { o.MaxConcurrentCalls = 20; o.MaxQueuedCalls = 10; })
+        .Retry(o => { o.MaxRetries = 3; o.BackoffType = BackoffType.ExponentialWithJitter; })
+        .CircuitBreaker(o => { o.CircuitKey = "create-order"; o.FailureThreshold = 5; })
+        .Timeout(TimeSpan.FromSeconds(30))
+        .Build());
+
+// Global fallback — retry + timeout para todos los demás commands/queries
+services.AddGlobalResiliencePolicy(
+    ResiliencePolicy.Create("global")
+        .Retry(o => { o.MaxRetries = 2; o.BackoffType = BackoffType.Linear; })
+        .Timeout(TimeSpan.FromSeconds(30))
+        .Build());
 ```
 
 El `ResilienceBehavior<TRequest, TResponse>` intercepta automáticamente en el pipeline:
-no requiere ningún cambio en los handlers.
+no requiere ningún cambio en los handlers ni en los commands.
+
+Cada política tiene un propósito específico y actúa en un escenario diferente:
+
+| Política | Qué hace | Cuándo actúa |
+|---|---|---|
+| **Retry** | Reintenta la operación | Solo si lanza una excepción (BD caída, timeout) |
+| **Circuit Breaker** | Corta el circuito | Después de N excepciones consecutivas |
+| **Bulkhead** | Limita concurrencia | Solo si hay demasiadas requests simultáneas |
+| **Timeout** | Cancela si tarda mucho | Si el handler no responde en X segundos |
 
 Protege contra:
 - ✅ **Fallos transitorios de BD** (Retry con backoff)
@@ -1241,31 +1229,37 @@ public class CreatePedidoCommandValidator : Validator<CreatePedidoCommand>
 // Usado automáticamente en ValidationBehavior
 ```
 
-### Vali-Mediator.Resilience v1.1.0
+### Vali-Mediator.Resilience v1.2.0
 
-Políticas de resiliencia zero-dependency (sin Polly):
+Políticas de resiliencia zero-dependency (sin Polly). A partir de v1.2.0 las políticas
+se registran en DI desacopladas de los commands (el patrón `IResilient` fue deprecado):
+
 ```csharp
-// Registro en Program.cs
+// Program.cs — wiring del behavior y registry
+builder.Services.AddApplication();         // registra políticas por command + global fallback
 builder.Services.AddValiMediator(config =>
 {
-    config.AddResilienceBehavior();   // activa ResilienceBehavior<,> en el pipeline
+    config.AddResilienceBehavior();         // activa ResilienceBehavior<,> en el pipeline
 });
-builder.Services.AddResilienceRegistry();  // estado de Circuit Breaker compartido
+builder.Services.AddResilienceRegistry();  // estado de Circuit Breaker compartido (singleton)
 
-// Comando declara su política (static readonly = init único, cache óptimo)
-public record CreateOrderCommand(...) : IRequest<Result<OrderDto>>, IResilient
-{
-    private static readonly ResiliencePolicy _policy =
-        ResiliencePolicy.Presets.ForDatabase("create-order");
+// Application/DependencyInjection.cs — políticas declaradas por command
+services.AddResiliencePolicy<LoginCommand>(_ => ResiliencePolicy.Create("login")
+    .RateLimiter(o =>
+    {
+        o.Algorithm = RateLimiterAlgorithm.SlidingWindow;
+        o.PermitLimit = 5;
+        o.Window = TimeSpan.FromMinutes(1);
+        o.PartitionKeyResolver = r => ((LoginCommand)r).Email;  // aislado por cuenta
+    })
+    .Retry(o => { o.MaxRetries = 3; o.BackoffType = BackoffType.ExponentialWithJitter; })
+    .CircuitBreaker(o => { o.CircuitKey = "login"; o.FailureThreshold = 5; })
+    .Timeout(TimeSpan.FromSeconds(10))
+    .Build());
 
-    public ResiliencePolicy Policy => _policy;
-}
-
-// Presets disponibles:
-// ForDatabase  — Retry×2 linear + CB(3/20s) + Timeout 30s + Bulkhead 20
-// ForExternalApi — Retry×3 jitter + CB(5/30s) + Timeout 15s
-// ForCritical  — Retry×5 jitter + Rate CB(50%/20/60s) + Timeout 20s + Bulkhead 5
-// NoResilience — pass-through (testing / endpoints de baja criticidad)
+// Global fallback para todos los commands sin política explícita
+services.AddGlobalResiliencePolicy(
+    ResiliencePolicy.Create("global").Retry(2).Timeout(TimeSpan.FromSeconds(30)).Build());
 ```
 
 ### Vali-Flow.Core v2.0.1

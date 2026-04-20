@@ -10,7 +10,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.*" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.13.22" />
     <PackageReference Include="Vali-Mediator.AspNetCore" Version="1.1.0" />
-    <PackageReference Include="Vali-Mediator.Resilience" Version="1.1.0" />
+    <PackageReference Include="Vali-Mediator.Resilience" Version="1.2.2" />
   </ItemGroup>
 
   <PropertyGroup>

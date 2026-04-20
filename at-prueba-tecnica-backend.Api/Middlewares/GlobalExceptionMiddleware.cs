@@ -1,7 +1,6 @@
-using System.Net;
-using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using at_prueba_tecnica_backend.Api.Responses;
+using Vali_Mediator_Resilience.Core.Exceptions;
 
 namespace at_prueba_tecnica_backend.Api.Middlewares;
 
@@ -39,17 +38,47 @@ public class GlobalExceptionMiddleware
 
         object response;
 
-        // Handle DbUpdateException (database constraint violations, etc.)
-        if (exception is DbUpdateException dbEx)
+        if (exception is CircuitOpenException circuitEx)
         {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            var message = ExtractDbErrorMessage(dbEx);
-
+            context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
             response = new
             {
                 success = false,
                 data = (object?)null,
-                message = message,
+                message = $"Service temporarily unavailable. Retry after {circuitEx.RetryAfter?.TotalSeconds:0}s.",
+                errors = (object?)null
+            };
+        }
+        else if (exception is BulkheadRejectedException)
+        {
+            context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+            response = new
+            {
+                success = false,
+                data = (object?)null,
+                message = "Too many concurrent requests. Please retry later.",
+                errors = (object?)null
+            };
+        }
+        else if (exception is TimeoutException)
+        {
+            context.Response.StatusCode = StatusCodes.Status504GatewayTimeout;
+            response = new
+            {
+                success = false,
+                data = (object?)null,
+                message = "The request timed out. Please retry later.",
+                errors = (object?)null
+            };
+        }
+        else if (exception is DbUpdateException dbEx)
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            response = new
+            {
+                success = false,
+                data = (object?)null,
+                message = ExtractDbErrorMessage(dbEx),
                 errors = (object?)null
             };
         }

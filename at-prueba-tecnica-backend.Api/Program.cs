@@ -17,6 +17,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Infrastructure DI (must be before validators since validators depend on repositories)
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// Application DI (resilience policies, etc.)
+builder.Services.AddApplication();
+
 // Register Vali-Validation validators from assembly
 builder.Services.AddValidationsFromAssembly(typeof(ApplicationAssemblyMarker).Assembly);
 
@@ -28,7 +31,7 @@ builder.Services.AddValiMediator(config =>
     config.AddResilienceBehavior();
 });
 
-// Shared circuit-breaker registry (singleton state across all IResilient commands)
+// Shared circuit-breaker registry (singleton state across all commands)
 builder.Services.AddResilienceRegistry();
 
 // JWT Authentication
