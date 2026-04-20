@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using Vali_Mediator.Core.General.Extension;
+using Vali_Mediator_Resilience.Integration;
 using Vali_Validation.Core.Extensions;
 using Vali_Validation.ValiMediator;
 
@@ -19,12 +20,16 @@ builder.Services.AddInfrastructure(builder.Configuration);
 // Register Vali-Validation validators from assembly
 builder.Services.AddValidationsFromAssembly(typeof(ApplicationAssemblyMarker).Assembly);
 
-// Vali-Mediator con Vali-Validation integration
+// Vali-Mediator con Vali-Validation + Resilience integration
 builder.Services.AddValiMediator(config =>
 {
     config.RegisterServicesFromAssembly(typeof(ApplicationAssemblyMarker).Assembly);
     config.AddValiValidationBehavior();
+    config.AddResilienceBehavior();
 });
+
+// Shared circuit-breaker registry (singleton state across all IResilient commands)
+builder.Services.AddResilienceRegistry();
 
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()

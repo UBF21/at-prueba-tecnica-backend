@@ -26,7 +26,7 @@ Demostrar expertise senior en:
 | **Entity Framework Core** | 9.0 | ORM |
 | **Vali-Mediator** | 2.0.1 | ⭐ CQRS + Result<T> |
 | **Vali-Validation** | 2.0.1 | ⭐ Validators fluidos |
-| **Vali-Mediator.Resilience** | 1.0.1 | ⭐ Políticas Polly |
+| **Vali-Mediator.Resilience** | 1.1.0 | ⭐ Políticas de resiliencia (sin Polly) |
 | **Vali-Flow.Core** | 2.0.2 | ⭐ Query builders |
 | **Vali-Flow** | 1.3.4 | ⭐ EF evaluator |
 | **System.IdentityModel.Tokens.Jwt** | 7.x | JWT tokens |
@@ -44,11 +44,12 @@ Demostrar expertise senior en:
   - Async validators
   - Mensajes customizables
   
-- **Vali-Mediator.Resilience**: Políticas de resiliencia
-  - Circuit Breaker (evita cascadas)
-  - Retry con backoff exponencial
-  - Timeout enforcement
-  - Bulkhead isolation
+- **Vali-Mediator.Resilience**: Políticas de resiliencia (zero-dependency, sin Polly)
+  - Circuit Breaker con sliding window (Closed → Open → HalfOpen)
+  - Retry con backoff Fixed / Linear / Exponential / ExponentialWithJitter
+  - Timeout optimista (CancellationToken) y pesimista (Task.WhenAny)
+  - Bulkhead (semáforo de concurrencia + queue)
+  - Presets listos para uso: ForDatabase, ForExternalApi, ForCritical, NoResilience
   
 - **Vali-Flow.Core**: Builder de queries LINQ
   - Expression trees type-safe
@@ -947,30 +948,121 @@ await _repository.UpdateAsync(customer, saveChanges: true, ct);
 - SaveChanges ocurre por operación (no combinado)
 - Filtros globales via `HasQueryFilter` excluyen soft-deleted automáticamente
 
-### RESILIENCIA (Polly via Vali-Mediator.Resilience)
+### RESILIENCIA (Vali-Mediator.Resilience)
+
+Esta librería implementa resiliencia sin dependencias externas (no usa Polly).
+La integración con el mediator se activa via `config.AddResilienceBehavior()` en `Program.cs` y un
+registry singleton (`AddResilienceRegistry`) para compartir el estado del Circuit Breaker entre
+comandos que accedan al mismo recurso.
+
+Los comandos críticos implementan `IResilient` y declaran su política como campo `static readonly`
+(evaluado una sola vez, cache óptimo):
 
 ```csharp
-// En ResilienceBehavior.cs
-var policy = Policy.Handle<Exception>()
-    .CircuitBreakerAsync(handledEventsAllowedBeforeBreaking: 5, durationOfBreak: TimeSpan.FromSeconds(30))
-    .WrapAsync(
-        Policy.Handle<Exception>()
-            .WaitAndRetryAsync(
-                retryCount: 3,
-                sleepDurationProvider: attempt => TimeSpan.FromMilliseconds(100 * Math.Pow(2, attempt))
-            )
-    )
-    .WrapAsync(
-        Policy.TimeoutAsync(TimeSpan.FromSeconds(5))
-    );
+// CreateOrderCommand — Retry×3 jitter + CircuitBreaker(5/30s) + Timeout 30s
+public record CreateOrderCommand(string OrderNumber, Guid CustomerId)
+    : IRequest<Result<OrderDto>>, IResilient
+{
+    private static readonly ResiliencePolicy _policy = ResiliencePolicy
+        .Create("create-order")
+        .Retry(o =>
+        {
+            o.MaxRetries = 3;
+            o.BackoffType = BackoffType.ExponentialWithJitter;
+            o.InitialDelay = TimeSpan.FromMilliseconds(200);
+            o.MaxDelay = TimeSpan.FromSeconds(5);
+        })
+        .CircuitBreaker(o =>
+        {
+            o.CircuitKey = "create-order";
+            o.FailureThreshold = 5;
+            o.SamplingDuration = TimeSpan.FromSeconds(30);
+            o.BreakDuration = TimeSpan.FromSeconds(60);
+        })
+        .Timeout(TimeSpan.FromSeconds(30))
+        .Build();
 
-await policy.ExecuteAsync(cancellationToken => handler.Handle(...));
+    public ResiliencePolicy Policy => _policy;
+}
+
+// LoginCommand — Retry×3 jitter + CircuitBreaker(5/30s) + Timeout 10s
+public record LoginCommand(string Email, string Password)
+    : IRequest<Result<LoginResponseDto>>, IResilient
+{
+    private static readonly ResiliencePolicy _policy = ResiliencePolicy
+        .Create("login")
+        .Retry(o =>
+        {
+            o.MaxRetries = 3;
+            o.BackoffType = BackoffType.ExponentialWithJitter;
+            o.InitialDelay = TimeSpan.FromMilliseconds(100);
+            o.MaxDelay = TimeSpan.FromSeconds(3);
+        })
+        .CircuitBreaker(o =>
+        {
+            o.CircuitKey = "login";
+            o.FailureThreshold = 5;
+            o.SamplingDuration = TimeSpan.FromSeconds(30);
+            o.BreakDuration = TimeSpan.FromSeconds(60);
+        })
+        .Timeout(TimeSpan.FromSeconds(10))
+        .Build();
+
+    public ResiliencePolicy Policy => _policy;
+}
 ```
 
+El `ResilienceBehavior<TRequest, TResponse>` intercepta automáticamente en el pipeline:
+no requiere ningún cambio en los handlers.
+
 Protege contra:
-- ✅ **Cascadas de fallos** (Circuit Breaker)
-- ✅ **Fallos transitorios** (Retry exponencial)
-- ✅ **Cuellos de botella** (Timeout)
+- ✅ **Fallos transitorios de BD** (Retry con backoff)
+- ✅ **Cascadas de fallos** (Circuit Breaker — abre después de N fallos consecutivos)
+- ✅ **Timeouts** (cancela operaciones que excedan el límite)
+- ✅ **Saturación de concurrencia** (Bulkhead — limita llamadas simultáneas)
+
+#### Por qué no se implementaron Circuit Breaker HTTP ni Bulkhead para APIs externas
+
+Este OMS es un **backend autónomo**: no consume servicios HTTP externos ni se comunica con
+otros microservicios. Todos los accesos son internos (DB SQL Server vía EF Core).
+
+Los patrones clásicos de resiliencia distribuida aplican cuando:
+- Hay llamadas a APIs de terceros (pagos, notificaciones, inventario externo)
+- Existe comunicación inter-servicio en una arquitectura de microservicios
+- Se usa un message broker externo (RabbitMQ, Kafka) sin cliente local
+
+En ese escenario se agregaría:
+
+```csharp
+// Ejemplo ilustrativo — para un hipotético servicio de pagos externo
+services.AddHttpClient<IPaymentGatewayClient, PaymentGatewayClient>()
+    .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+    {
+        PooledConnectionLifetime = TimeSpan.FromMinutes(2)
+    });
+
+// Policy dedicada para el cliente HTTP externo
+var externalApiPolicy = ResiliencePolicy.Create("payment-gateway")
+    .Retry(o =>
+    {
+        o.MaxRetries = 3;
+        o.BackoffType = BackoffType.ExponentialWithJitter;
+        o.InitialDelay = TimeSpan.FromMilliseconds(200);
+    })
+    .CircuitBreaker(o =>
+    {
+        o.CircuitKey = "payment-gateway";
+        o.FailureThreshold = 5;
+        o.SamplingDuration = TimeSpan.FromSeconds(30);
+        o.BreakDuration = TimeSpan.FromSeconds(60);
+    })
+    .Timeout(TimeSpan.FromSeconds(10))
+    .Build();
+```
+
+La resiliencia a nivel de **base de datos** ya está cubierta en dos capas:
+1. **EF Core** — `EnableRetryOnFailure(maxRetryCount: 10)` en `DependencyInjection.cs`
+2. **Mediator pipeline** — `ResilienceBehavior` con presets `ForDatabase` / `ForCritical` en los comandos críticos
 
 ---
 
@@ -1149,19 +1241,31 @@ public class CreatePedidoCommandValidator : Validator<CreatePedidoCommand>
 // Usado automáticamente en ValidationBehavior
 ```
 
-### Vali-Mediator.Resilience v1.0.1
+### Vali-Mediator.Resilience v1.1.0
 
-Políticas Polly integradas:
+Políticas de resiliencia zero-dependency (sin Polly):
 ```csharp
-// Registrado en DI
-services.AddMediatorResiliencePolicy(options =>
+// Registro en Program.cs
+builder.Services.AddValiMediator(config =>
 {
-    options.CircuitBreakerThreshold = 5;
-    options.RetryAttempts = 3;
-    options.TimeoutSeconds = 5;
+    config.AddResilienceBehavior();   // activa ResilienceBehavior<,> en el pipeline
 });
+builder.Services.AddResilienceRegistry();  // estado de Circuit Breaker compartido
 
-// Ejecutado automáticamente en pipeline
+// Comando declara su política (static readonly = init único, cache óptimo)
+public record CreateOrderCommand(...) : IRequest<Result<OrderDto>>, IResilient
+{
+    private static readonly ResiliencePolicy _policy =
+        ResiliencePolicy.Presets.ForDatabase("create-order");
+
+    public ResiliencePolicy Policy => _policy;
+}
+
+// Presets disponibles:
+// ForDatabase  — Retry×2 linear + CB(3/20s) + Timeout 30s + Bulkhead 20
+// ForExternalApi — Retry×3 jitter + CB(5/30s) + Timeout 15s
+// ForCritical  — Retry×5 jitter + Rate CB(50%/20/60s) + Timeout 20s + Bulkhead 5
+// NoResilience — pass-through (testing / endpoints de baja criticidad)
 ```
 
 ### Vali-Flow.Core v2.0.1
