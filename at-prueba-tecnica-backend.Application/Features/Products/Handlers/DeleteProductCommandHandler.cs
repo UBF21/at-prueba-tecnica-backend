@@ -36,7 +36,7 @@ public class DeleteProductCommandHandler : IRequestHandler<DeleteProductCommand,
             if (product is null)
                 return Result<bool>.Fail("Product not found", ErrorType.NotFound);
 
-            product.DeletedAt = DateTime.UtcNow;
+            product.Delete();
             await _repo.UpdateAsync(product, saveChanges: true, ct);
 
             return Result<bool>.Ok(true);

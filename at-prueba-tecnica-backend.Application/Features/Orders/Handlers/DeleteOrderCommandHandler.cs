@@ -36,7 +36,7 @@ public class DeleteOrderCommandHandler : IRequestHandler<DeleteOrderCommand, Res
             if (order is null)
                 return Result<bool>.Fail("Order not found", ErrorType.NotFound);
 
-            order.DeletedAt = DateTime.UtcNow;
+            order.Delete();
             await _repo.UpdateAsync(order, saveChanges: true, ct);
 
             return Result<bool>.Ok(true);

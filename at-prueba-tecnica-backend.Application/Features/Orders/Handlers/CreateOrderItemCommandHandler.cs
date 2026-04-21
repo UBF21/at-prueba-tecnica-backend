@@ -24,16 +24,13 @@ public class CreateOrderItemCommandHandler : IRequestHandler<CreateOrderItemComm
 {
     private readonly IOrderRepository _orderRepo;
     private readonly IProductRepository _productRepo;
-    private readonly IOrderItemRepository _itemRepo;
 
     public CreateOrderItemCommandHandler(
         IOrderRepository orderRepo,
-        IProductRepository productRepo,
-        IOrderItemRepository itemRepo)
+        IProductRepository productRepo)
     {
         _orderRepo = orderRepo;
         _productRepo = productRepo;
-        _itemRepo = itemRepo;
     }
 
     public async Task<Result<OrderDto>> Handle(CreateOrderItemCommand command, CancellationToken ct)
