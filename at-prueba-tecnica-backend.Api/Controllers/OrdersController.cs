@@ -60,6 +60,7 @@ public class OrdersController : ControllerBase
     /// Creates a new order.
     /// OrderNumber must be unique.
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<OrderDto>>> CreateOrder(
         [FromBody] CreateOrderCommand command,
@@ -73,6 +74,7 @@ public class OrdersController : ControllerBase
     /// <summary>
     /// Updates an existing order.
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpPut("{id}")]
     public async Task<ActionResult<ApiResponse<OrderDto>>> UpdateOrder(
         Guid id,
@@ -89,6 +91,7 @@ public class OrdersController : ControllerBase
     /// Deletes an order (soft delete).
     /// The order is marked as deleted but not removed from the database.
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
     public async Task<ActionResult<ApiResponse<bool>>> DeleteOrder(Guid id, CancellationToken ct)
     {
@@ -103,6 +106,7 @@ public class OrdersController : ControllerBase
     /// The order must not be in Cancelled or Delivered status.
     /// The product must have sufficient stock.
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpPost("{orderId}/items")]
     public async Task<IActionResult> AddOrderItem(
         Guid orderId,

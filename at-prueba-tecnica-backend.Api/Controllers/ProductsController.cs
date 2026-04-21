@@ -57,6 +57,7 @@ public class ProductsController : ControllerBase
     /// <summary>
     /// Creates a new product.
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<ProductDto>>> CreateProduct(
         [FromBody] CreateProductCommand command,
@@ -70,6 +71,7 @@ public class ProductsController : ControllerBase
     /// <summary>
     /// Updates an existing product.
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpPut("{id}")]
     public async Task<ActionResult<ApiResponse<ProductDto>>> UpdateProduct(
         Guid id,
@@ -86,6 +88,7 @@ public class ProductsController : ControllerBase
     /// Deletes a product (soft delete).
     /// The product is marked as deleted but not removed from the database.
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
     public async Task<ActionResult<ApiResponse<bool>>> DeleteProduct(Guid id, CancellationToken ct)
     {

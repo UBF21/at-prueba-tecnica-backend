@@ -1,5 +1,7 @@
 using System.Text;
+using System.Text.Json;
 using at_prueba_tecnica_backend.Api.Middlewares;
+using at_prueba_tecnica_backend.Api.Responses;
 using at_prueba_tecnica_backend.Application;
 using at_prueba_tecnica_backend.Infrastructure;
 using at_prueba_tecnica_backend.Infrastructure.Auth;
@@ -53,6 +55,31 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = jwtSettings.Audience,
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = async context =>
+            {
+                context.HandleResponse();
+                context.Response.StatusCode = 401;
+                context.Response.ContentType = "application/json";
+                var response = ApiResponse<object>.Fail("No autorizado. Token inválido o ausente.");
+                await context.Response.WriteAsync(JsonSerializer.Serialize(response, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                }));
+            },
+            OnForbidden = async context =>
+            {
+                context.Response.StatusCode = 403;
+                context.Response.ContentType = "application/json";
+                var response = ApiResponse<object>.Fail("Acceso denegado. No tenés los permisos necesarios.");
+                await context.Response.WriteAsync(JsonSerializer.Serialize(response, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                }));
+            }
         };
     });
 

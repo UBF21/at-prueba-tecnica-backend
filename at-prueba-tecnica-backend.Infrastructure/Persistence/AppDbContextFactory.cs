@@ -15,13 +15,20 @@ public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
     {
         var basePath = Directory.GetCurrentDirectory();
 
-        // Si estamos en Infrastructure, subir a la raíz
-        if (basePath.EndsWith("at-prueba-tecnica-backend.Infrastructure"))
+        // dotnet ef with --startup-project sets cwd to the Api project directory directly
+        string apiPath;
+        if (basePath.EndsWith("at-prueba-tecnica-backend.Api"))
         {
-            basePath = Path.GetDirectoryName(basePath) ?? basePath;
+            apiPath = basePath;
         }
-
-        var apiPath = Path.Combine(basePath, "at-prueba-tecnica-backend.Api");
+        else
+        {
+            // Running from solution root or Infrastructure project
+            var root = basePath.EndsWith("at-prueba-tecnica-backend.Infrastructure")
+                ? Path.GetDirectoryName(basePath) ?? basePath
+                : basePath;
+            apiPath = Path.Combine(root, "at-prueba-tecnica-backend.Api");
+        }
 
         var config = new ConfigurationBuilder()
             .SetBasePath(apiPath)

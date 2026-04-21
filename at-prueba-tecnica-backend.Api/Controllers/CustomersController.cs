@@ -56,6 +56,7 @@ public class CustomersController : ControllerBase
     /// <summary>
     /// Creates a new customer.
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<CreateCustomerCommand.Response>>> CreateCustomer(
         [FromBody] CreateCustomerCommand command,
@@ -71,6 +72,7 @@ public class CustomersController : ControllerBase
     /// <summary>
     /// Updates an existing customer.
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpPut("{id}")]
     public async Task<ActionResult<ApiResponse<UpdateCustomerCommand.Response>>> UpdateCustomer(
         Guid id,
@@ -86,6 +88,7 @@ public class CustomersController : ControllerBase
     /// <summary>
     /// Deletes (soft delete) a customer.
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
     public async Task<ActionResult<ApiResponse<bool>>> DeleteCustomer(Guid id, CancellationToken ct = default)
     {
